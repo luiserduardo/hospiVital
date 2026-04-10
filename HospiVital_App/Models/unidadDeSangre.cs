@@ -6,7 +6,6 @@
     {
         //Atributos segun diagrama
         private int idUnidad;
-        private string codigo;
         private string tipoSangre;
         private string factorRh;
         private DateTime fechaIngreso;
@@ -15,16 +14,20 @@
         private double cantidad;
 
         //vial contiene info de donante
-
+        //falta agregar eso
 
         //Constructuor iniacial
+
+        public unidadDeSangre()
+        {
+            
+        }
         public unidadDeSangre(int idUnidad, 
-            string codigo, string tipoSangre, 
+           string tipoSangre, 
             string factorRh, DateTime fechaIngreso, 
             DateTime fechaCaducidad, string estadoUnidad, double cantidad)
         {
             this.IdUnidad = idUnidad;
-            this.Codigo = codigo;
             this.TipoSangre = tipoSangre;
             this.FactorRh = factorRh;
             this.FechaIngreso = fechaIngreso;
@@ -35,7 +38,6 @@
 
         //Metodos para acceder de manera publica
         public int IdUnidad { get => idUnidad; set => idUnidad = value; }
-        public string Codigo { get => codigo; set => codigo = value; }
         public string TipoSangre { get => tipoSangre; set => tipoSangre = value; }
         public string FactorRh { get => factorRh; set => factorRh = value; }
         public DateTime FechaIngreso { get => fechaIngreso; set => fechaIngreso = value; }
@@ -54,7 +56,8 @@
 
         public int cantidadDiasParaVencer()
         {
-            return (FechaCaducidad - DateTime.Now).Days;
+            //Le agregamos 3 dias porque es un recurso que hay que tener mucho cuidad, no es como la comidad que si la pones el mismo dia no pasa nada
+            return (FechaCaducidad - DateTime.Now.AddDays(3)).Days;
 
         }
 
