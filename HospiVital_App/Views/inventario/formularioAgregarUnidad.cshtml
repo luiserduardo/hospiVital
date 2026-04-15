@@ -5,14 +5,14 @@
 }
 
 
-<form asp-action="agregarUnidad" method="post">
+<form id="formularioAgregarUnidad" asp-action="agregarUnidad" method="post">
     <div class="modal-body">
         
         <h1>REGISTRO DE NUEVO DONANTE</h1>
 
         <div class="mb-3">
-            <label>ID DONACION</label>
-            <input name="idUnidad" type="text" class="form-control" required />
+            <label>Id donación</label>
+            <input id="idUnidad" name="idUnidad" type="text" class="form-control" readonly />
         </div>
 
         <div class="mb-3">
@@ -45,16 +45,121 @@
         </div>
 
         <div class="mb-3">
-            <label>ESTADO</label>
-            <input name="estadoUnidad" type="text" class="form-control" required />
+            <label class="form-label">Estado del vial</label>
+            <select name="estadoUnidad" class="form-select" readonly>
+                <option value="Disponible">Disponible</option>
+            </select>
         </div>
 
 
         <div class="mb-3">
-            <label>CANTIDAD</label>
-            <input name="cantidad" type="text" class="form-control" required />
+            <label>Cantidad</label>
+            <input name="cantidad" value="1" type="text" class="form-control" readonly required />
         </div>
 
+        <p>Informacion personal</p>
+
+        <div class="mb-3">
+            <label>DUI</label>
+            <input name="dui" type="text" class="form-control" placeholder="00000000-0" required />
+        </div>
+
+        <div class="mb-3">
+            <label>Nombre</label>
+            <input name="nombre" type="text" class="form-control" placeholder="Nombre" required />
+        </div>
+
+        <div class="mb-3">
+            <label>Apellido</label>
+            <input name="apellido" type="text" class="form-control" placeholder="Apellido" required />
+        </div>
+
+        <div class="mb-3">
+            <label>Telefono</label>
+            <input name="telefono" type="text" class="form-control" placeholder="Telefono" required />
+        </div>
+
+        @* pESO NO PUEDE SER MENOR A 50 KG, ESO ES EXCLUYENTE, NO DEJAR AVANZAR EN ESE CASO  *@
+        <div class="mb-3">
+            <label>Peso</label>
+            <input name="peso" type="text" class="form-control" placeholder="50 kg" required />
+        </div>
+
+        @* NO ES NECESARIO MANDAR ESTA INFORMACION MAS QUE PARA COMPROBAR *@
+        <p>Cuestionaria de elegibilidad</p>
+        <div class="mb-3">
+            <label class="d-block mb-2">¿Ha desayunado hoy?</label>
+            <div class="btn-group" role="group" aria-label="Selección de desayuno">
+
+                <input type="radio" class="btn-check" name="haDesayunado" id="siDesayuno" value="true" autocomplete="off">
+                <label class="btn btn-outline-success" for="siDesayuno">
+                    <i class="bi bi-check-circle"></i> Sí
+                </label>
+
+                <input type="radio" class="btn-check" name="haDesayunado" id="noDesayuno" value="false" autocomplete="off" checked>
+                <label class="btn btn-outline-danger" for="noDesayuno">No</label>
+
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="d-block mb-2">¿Durmio al menos 6 horas?</label>
+            <div class="btn-group" role="group" aria-label="Selección dormir">
+
+                <input type="radio" class="btn-check" name="haDormido" id="siDormir" value="true" autocomplete="off">
+                <label class="btn btn-outline-success" for="siDormir">
+                    <i class="bi bi-check-circle"></i> Sí
+                </label>
+
+                <input type="radio" class="btn-check" name="haDormido" id="noDormir" value="false" autocomplete="off" checked>
+                <label class="btn btn-outline-danger" for="noDormir">No</label>
+
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="d-block mb-2">¿Tatuajes ultimos 12 meses?</label>
+            <div class="btn-group" role="group" aria-label="Selección tatuajes">
+
+                <input type="radio" class="btn-check" name="realizadoTratuajes" id="siTatuajes" value="true" autocomplete="off">
+                <label class="btn btn-outline-success" for="siTatuajes">
+                    <i class="bi bi-check-circle"></i> Sí
+                </label>
+
+                <input type="radio" class="btn-check" name="realizadoTratuajes" id="noTatuajes" value="false" autocomplete="off" checked>
+                <label class="btn btn-outline-danger" for="noTatuajes">No</label>
+
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="d-block mb-2">¿Ha consumido alcohol las ultimas 48 horas?</label>
+            <div class="btn-group" role="group" aria-label="Selección tatuajes">
+
+                <input type="radio" class="btn-check" name="haConsumido" id="siConsumo" value="true" autocomplete="off">
+                <label class="btn btn-outline-success" for="siConsumo">
+                    <i class="bi bi-check-circle"></i> Sí
+                </label>
+
+                <input type="radio" class="btn-check" name="haConsumido" id="noConsumo" value="false" autocomplete="off" checked>
+                <label class="btn btn-outline-danger" for="noConsumo">No</label>
+
+            </div>
+        </div>
+
+        <p>Antecedentes y Exclusion</p>
+
+        <div class="mb-3">
+            <label class="form-label">Tiene alguna enfermedad cronica?</label>
+            <select name="enfermedades" class="form-select">
+                <option value="Nada">No posee enfermedad</option>
+                <option value="hepatitis">Hepatitis</option>
+                <option value="SIDA">SIDA</option>
+                <option value="Anemia">Anemia</option>
+                <option value="Sifiles">Sifiles</option>
+                <option value="Priones">infecciones por priones.</option>
+            </select>
+        </div>
 
         @* informacion para ser excluyente *@
 

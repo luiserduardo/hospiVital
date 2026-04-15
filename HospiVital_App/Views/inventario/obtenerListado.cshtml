@@ -38,6 +38,7 @@
         <tr>
             <th>ID UNIDAD</th>
             <th>TIPO DE SANGRE</th>
+
             <th>FECHA INGRESO</th>
             <th>FECHA VENCIMIENTO</th>
             <th>ESTADO</th>
@@ -46,10 +47,11 @@
         </tr>
     </thead>
     <tbody>
+        @* Recorer cada modelo que se nos manda desde el controlador de inventario *@
 @foreach (var item in Model) {
         <tr>
            <td>@item.IdUnidad</td>
-           <td>@item.TipoSangre</td>
+                <td>@item.TipoSangre @item.FactorRh </td>
            <td>@item.FechaIngreso</td>
            <td>@item.FechaCaducidad</td>
            <td>@item.EstadoUnidad</td>
@@ -57,3 +59,10 @@
 }
     </tbody>
 </table>
+
+@* Esto cambiar *@
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="/js/inventario.js"></script>
+
+@* libreria para ventalnillas emergentes *@
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

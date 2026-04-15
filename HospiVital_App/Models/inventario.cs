@@ -37,7 +37,7 @@ namespace HospiVital_App.Models
             //aqui poner lo de id
         }
 
-        public unidadDeSangre buscarUnidad(int id)
+        public unidadDeSangre buscarUnidad(string id)
         {
             //guardar el nodo q esta al frente
             var actual = cola.obtenerFrente();

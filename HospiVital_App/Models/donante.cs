@@ -1,33 +1,45 @@
 ﻿namespace HospiVital_App.Models
 {
-    public class donante
+    public class Donante
     {
         private int idDonante;
         private string nombre;
         private string apellido;
         private string dui;
         private string telefono;
-        private string tipoSangre;
-        private string factorRh;
+        private double peso;
+    
 
         //constructor 
 
-        public donante()
+        public Donante()
         {
             
         }
-        public donante(int idDonante, 
+
+
+        public Donante(
+           string nombre, string apellido,
+           string dui, string telefono
+          )
+        {
+           this.Nombre = nombre;
+            this.Apellido = apellido;
+            this.Dui = dui;
+            this.Telefono = telefono;
+
+        }
+        public Donante(int idDonante, 
             string nombre, string apellido, 
-            string dui, string telefono, 
-            string tipoSangre, string factorRh)
+            string dui, string telefono 
+           )
         {
             this.IdDonante = idDonante;
             this.Nombre = nombre;
             this.Apellido = apellido;
             this.Dui = dui;
             this.Telefono = telefono;
-            this.TipoSangre = tipoSangre;
-            this.FactorRh = factorRh;
+         
         }
 
         public int IdDonante { get => idDonante; set => idDonante = value; }
@@ -35,7 +47,6 @@
         public string Apellido { get => apellido; set => apellido = value; }
         public string Dui { get => dui; set => dui = value; }
         public string Telefono { get => telefono; set => telefono = value; }
-        public string TipoSangre { get => tipoSangre; set => tipoSangre = value; }
-        public string FactorRh { get => factorRh; set => factorRh = value; }
+   
     }
 }
