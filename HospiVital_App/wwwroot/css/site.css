@@ -18,5 +18,11 @@ html {
 }
 
 body {
-  margin-bottom: 60px;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-link:hover {
+    background-color: #f8d7da;
+    border-radius: 8px;
 }

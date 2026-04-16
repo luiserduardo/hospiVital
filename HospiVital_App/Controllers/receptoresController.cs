@@ -24,14 +24,14 @@ namespace HospiVital_App.Controllers
             }
 
 
-            return View();
+            return View(asignacionesRealizadas);
         }
 
         //Método para simular datos iniciales
         private void CargarDatosPrueba()
         {
             // Donante ficticio
-            Donante d1 = new Donante(1, "Juan", "Pérez", "000000-0", "7777-7777", 1);
+            Donante d1 = new Donante(1, "Juan", "Pérez", "000000-0", "7777-7777");
 
             //Creamos una unidad y un paciente
             unidadDeSangre u1 = new unidadDeSangre("B-1024-A", "A", "+", DateTime.Now, DateTime.Now.AddMonths(1), "Disponible", 450, d1);
