@@ -1,0 +1,68 @@
+﻿
+@* El modelo en el que esta basado *@
+@model IEnumerable<HospiVital_App.Models.unidadDeSangre>
+
+@{
+    ViewData["Title"] = "Listado de unidades";
+}
+
+@* organizar esto mejor *@
+<h1>Listado de unidades de sangre</h1>
+
+@* AQUI LO QUE HACE ES USAR BOOSTRAP PARA PODER DESPLEGAR EL FORM, SI QUIERE CAMBIER ESTO YANI, BUSQUE LA VISTA LLAMADA FORMULARIOaGREGARUNIDAD, EN ESTA CARPETA *@
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAgregar">
+    Ir a Agregar Unidad
+</button>
+
+@* formulario *@
+<div class="modal fade" id="modalAgregar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nueva Unidad</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            @* Aquí insertamos la vista que creamos aparte *@
+            <partial name="formularioAgregarUnidad" model="new HospiVital_App.Models.unidadDeSangre()" />
+
+        </div>
+    </div>
+</div>
+@* formulari *@
+
+
+@* TABLA *@
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID UNIDAD</th>
+            <th>TIPO DE SANGRE</th>
+
+            <th>FECHA INGRESO</th>
+            <th>FECHA VENCIMIENTO</th>
+            <th>ESTADO</th>
+            <th>ACCIONES</th>
+          
+        </tr>
+    </thead>
+    <tbody>
+        @* Recorer cada modelo que se nos manda desde el controlador de inventario *@
+@foreach (var item in Model) {
+        <tr>
+           <td>@item.IdUnidad</td>
+                <td>@item.TipoSangre @item.FactorRh </td>
+           <td>@item.FechaIngreso</td>
+           <td>@item.FechaCaducidad</td>
+           <td>@item.EstadoUnidad</td>
+        </tr>
+}
+    </tbody>
+</table>
+
+@* Esto cambiar *@
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="/js/inventario.js"></script>
+
+@* libreria para ventalnillas emergentes *@
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
