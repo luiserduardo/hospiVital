@@ -8,19 +8,16 @@ namespace HospiVital_App.Controllers
         //Para evitar que se borre statick
        private static inventario inventario = new inventario();
 
-        int i = 0;
         //OJO, DATOS DE PRUEBA
-        public inventarioController()
+        static inventarioController()
         {
 
-            if (inventario.listaDisponibles().Count == i)
-            {
-
+            
 
                 Donante donantePrueba = new Donante(0, "Roberto", "Gómez", "01234567-8", "7788-9900");
 
-                inventario.agregarUnidad(new unidadDeSangre("HP202693361252", "O", "+",
-    DateTime.Now, DateTime.Now.AddDays(5), "Disponible", 500, donantePrueba));
+                inventario.agregarUnidad(new unidadDeSangre("HP202693361252", "B", "+",
+    DateTime.Now, DateTime.Now.AddDays(-5), "Vencido", 500, donantePrueba));
 
                 inventario.agregarUnidad(new unidadDeSangre("HP202693363113",  "A", "+",
                     DateTime.Now, DateTime.Now.AddDays(2), "Disponible", 500, donantePrueba));
@@ -28,7 +25,7 @@ namespace HospiVital_App.Controllers
                 inventario.agregarUnidad(new unidadDeSangre("HP202693361231",  "B", "-",
                     DateTime.Now, DateTime.Now.AddDays(10), "Disponible", 500, donantePrueba));
      }
-        }
+        
 
 
         [HttpPost]
@@ -62,8 +59,7 @@ namespace HospiVital_App.Controllers
         [HttpGet]
       public ActionResult obtenerListado()
         {
-            var lista = inventario.listaDisponibles();
-            return View(lista);
+            var lista = inventario.listaDisponibles() ?? new List<unidadDeSangre>(); return View(lista);
         }
 
 
@@ -82,8 +78,40 @@ namespace HospiVital_App.Controllers
 
             return Content(codigo);
         }
-        
 
+        [HttpPost]
+        public ActionResult generarDetalleUnidad(string idUnidad)
+        {
+            var unidad = inventario.buscarUnidad(idUnidad);
+
+            if (unidad == null)
+            {
+                return Json(new { success = false, message = "Unidad no encontrada" });
+            }
+
+            return Json(new
+            {
+                success = true,
+
+                //Mandar todos los datoss, incluso de la clase que contiene 
+                unidad = new
+                {
+                    idUnidad = unidad.IdUnidad,
+                    tipoSangre = unidad.TipoSangre,
+                    factorRh = unidad.FactorRh,
+                    fechaIngreso = unidad.FechaIngreso.ToString("dd/MM/yyyy"),
+                    fechaCaducidad = unidad.FechaCaducidad.ToString("dd/MM/yyyy"),
+                    cantidad = unidad.Cantidad.ToString()
+                    ,
+                    nombreDonante = unidad.Donante?.Nombre ?? "N/A",
+                    apellidoDonante = unidad.Donante.Apellido ?? "N/A",
+                    dui = unidad.Donante?.Dui ?? "N/A",
+                    telefono = unidad.Donante?.Telefono ?? "N/A",
+                    peso = unidad.Donante.Peso,
+                    estado = unidad.EstadoUnidad
+                }
+            });
+        }
 
     }
 }

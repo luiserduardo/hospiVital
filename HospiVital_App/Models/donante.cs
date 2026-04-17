@@ -48,5 +48,7 @@
         public string Dui { get => dui; set => dui = value; }
         public string Telefono { get => telefono; set => telefono = value; }
    
+        public double Peso { get => peso; set => peso = value; }
+
     }
 }
