@@ -1,68 +1,227 @@
-﻿
-@* El modelo en el que esta basado *@
+﻿@* El modelo en el que esta basado *@
 @model IEnumerable<HospiVital_App.Models.unidadDeSangre>
-
 @{
     ViewData["Title"] = "Listado de unidades";
 }
 
-@* organizar esto mejor *@
-<h1>Listado de unidades de sangre</h1>
 
-@* AQUI LO QUE HACE ES USAR BOOSTRAP PARA PODER DESPLEGAR EL FORM, SI QUIERE CAMBIER ESTO YANI, BUSQUE LA VISTA LLAMADA FORMULARIOaGREGARUNIDAD, EN ESTA CARPETA *@
-<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAgregar">
-    Ir a Agregar Unidad
-</button>
+@section Styles {
+    <link rel="stylesheet" href="~/css/inventario.css" asp-append-version="true" />
+}
 
-@* formulario *@
-<div class="modal fade" id="modalAgregar" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Nueva Unidad</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            @* Aquí insertamos la vista que creamos aparte *@
-            <partial name="formularioAgregarUnidad" model="new HospiVital_App.Models.unidadDeSangre()" />
-
+@* cuadros, mas adelante consultas a base de datos *@
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-info">
+            <small>Total Unidades</small>
         </div>
+        <div class="stat-icon primary">🩸</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <small>Activas</small>
+            @* <h3>@Model.Count(x => x.EstadoUnidad == "Activo")</h3> *@
+        </div>
+        <div class="stat-icon success">✔</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <small>Vencidas</small>
+            @* <h3>@Model.Count(x => x.EstadoUnidad == "Vencido")</h3> *@
+        </div>
+        <div class="stat-icon warning">⌛</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <small>Hoy</small>
+            @* <h3>@Model.Count(x => x.FechaIngreso.Date == DateTime.Today)</h3> *@
+        </div>
+        <div class="stat-icon primary">📅</div>
     </div>
 </div>
-@* formulari *@
 
-
-@* TABLA *@
-<table class="table">
-    <thead>
-        <tr>
-            <th>ID UNIDAD</th>
-            <th>TIPO DE SANGRE</th>
-
-            <th>FECHA INGRESO</th>
-            <th>FECHA VENCIMIENTO</th>
-            <th>ESTADO</th>
-            <th>ACCIONES</th>
-          
-        </tr>
-    </thead>
-    <tbody>
-        @* Recorer cada modelo que se nos manda desde el controlador de inventario *@
-@foreach (var item in Model) {
-        <tr>
-           <td>@item.IdUnidad</td>
-                <td>@item.TipoSangre @item.FactorRh </td>
-           <td>@item.FechaIngreso</td>
-           <td>@item.FechaCaducidad</td>
-           <td>@item.EstadoUnidad</td>
-        </tr>
+@{
+    string GetBloodBadgeClass(string tipo)
+    {
+        return tipo switch
+        {
+            "A+" or "A-" => "badge-blue",
+            "B+" or "B-" => "badge-primary",
+            "AB+" or "AB-" => "badge-pink",
+            "O+" => "badge-orange",
+            "O-" => "badge-red",
+            _ => "badge-warning"
+        };
+    }
 }
-    </tbody>
-</table>
+
+<div class="content-card inventario-shell">
+    <div class="content-card-body">
+
+        <div class="toolbar inventario-toolbar">
+            <div class="toolbar-left">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input id="inventarioSearch" type="text" placeholder="ID o nombre del donante" />
+                </div>
+            </div>
+
+            <div class="toolbar-right inventario-toolbar-right">
+                <div class="inventario-filter-wrap">
+                    <button id="btnToggleFiltros" type="button" class="filter-btn">☰ Filtrar</button>
+
+                    <div id="inventarioFilterPanel" class="inventario-filter-panel">
+                        <div class="inventario-filter-title">FILTRAR POR</div>
+
+                        <div class="inventario-filter-group">
+                            <label for="filterFecha">Por Fecha</label>
+                            <select id="filterFecha" class="inventario-select">
+                                <option value="all">Todas</option>
+                                <option value="today">Hoy</option>
+                                <option value="last7">Últimos 7 días</option>
+                                <option value="last30">Últimos 30 días</option>
+                            </select>
+                        </div>
+
+                        <div class="inventario-filter-group">
+                            <label for="filterEstado">Por Estado</label>
+                            <select id="filterEstado" class="inventario-select">
+                                <option value="all">Todos</option>
+                                <option value="Disponible">Disponible</option>
+                                <option value="Vencido">Vencido</option>
+                            </select>
+                        </div>
+
+                        <div class="inventario-filter-group">
+                            <label>Por Tipo de Sangre</label>
+                            <div class="blood-filter-grid" id="bloodFilterGrid">
+                                <button type="button" class="blood-filter-chip" data-blood="A+">A+</button>
+                                <button type="button" class="blood-filter-chip" data-blood="A-">A-</button>
+                                <button type="button" class="blood-filter-chip" data-blood="B+">B+</button>
+                                <button type="button" class="blood-filter-chip" data-blood="B-">B-</button>
+                                <button type="button" class="blood-filter-chip" data-blood="AB+">AB+</button>
+                                <button type="button" class="blood-filter-chip" data-blood="AB-">AB-</button>
+                                <button type="button" class="blood-filter-chip" data-blood="O+">O+</button>
+                                <button type="button" class="blood-filter-chip" data-blood="O-">O-</button>
+                            </div>
+                        </div>
+
+                        <div class="inventario-filter-actions">
+                            <button id="btnLimpiarFiltros" type="button" class="btn-outline-custom filter-action-btn">Limpiar</button>
+                            <button id="btnAplicarFiltros" type="button" class="add-btn filter-action-btn">Aplicar Filtros</button>
+                        </div>
+                    </div>
+                </div>
+
+                @* AQUI LO QUE HACE ES USAR BOOSTRAP PARA PODER DESPLEGAR EL FORM, SI QUIERE CAMBIER ESTO YANI, BUSQUE LA VISTA LLAMADA FORMULARIOaGREGARUNIDAD, EN ESTA CARPETA *@
+                <button id="btnAbrirDonacion" type="button" class="add-btn">
+                    ⊕ AGREGAR DONACIÓN
+                </button>
+            </div>
+        </div>
+
+        @* formulario *@
+        <div id="inventarioModalBackdrop" class="inventario-modal-backdrop">
+            <div class="inventario-modal">
+
+                <div class="inventario-modal-header">
+                    <div class="inventario-modal-title">🩸 REGISTRO DE NUEVO DONANTE</div>
+
+                    <button type="button"
+                            id="btnCerrarDonacion"
+                            class="inventario-modal-close">
+                        ×
+                    </button>
+                </div>
+
+                <partial name="~/Views/Inventario/formularioAgregarUnidad.cshtml" 
+                         model="new HospiVital_App.Models.unidadDeSangre()" />
+
+
+            </div>
+        </div>
+        @* formulario *@
+
+        @* TABLA *@
+        <div class="table-wrap">
+            <table class="table-modern">
+                <thead>
+                    <tr>
+                        <th>ID UNIDAD</th>
+                        <th>TIPO DE SANGRE</th>
+                        <th>FECHA INGRESO</th>
+                        <th>FECHA VENCIMIENTO</th>
+                        <th>ESTADO</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="inventarioTableBody">
+                    @if (Model != null && Model.Any())
+                    @foreach (var item in Model)
+                    {
+                        var esVencido = item.EstadoUnidad == "Vencido";
+
+                        <tr class="@(esVencido ? "row-expired" : "")">
+                            <td class="unit-code">
+                                @item.IdUnidad
+                            </td>
+                            <td>
+                                @{
+                                    var tipoCompleto = item.TipoSangre + item.FactorRh;
+                                    var bloodClass = GetBloodBadgeClass(tipoCompleto);
+                                }
+                                <span class="badge-soft @bloodClass">@tipoCompleto</span>
+
+                            </td>
+                            <td>@item.FechaIngreso.ToString("dd/MM/yyyy")</td>
+                            <td class="@(item.EstadoUnidad == "Vencido" ? "unit-code" : "")">
+                                @item.FechaCaducidad.ToString("dd/MM/yyyy")
+                            </td>
+                            <td>
+                                <span class="badge-soft @(item.EstadoUnidad == "Vencido" ? "badge-danger" : "badge-success")">
+                                    @(item.EstadoUnidad == "Vencido" ? "Vencido" : "Disponible")
+                                </span>
+                            </td>
+                            <td>
+
+                                <td class="actions-cell">
+                                    <div class="actions-dropdown">
+                                        <button type="button" class="actions-menu" data-action-toggle="@item.IdUnidad">⋮</button>
+                                        <div class="actions-popover" data-action-menu="@item.IdUnidad">
+                                            <button type="button" class="actions-popover-item" data-view-detail="@item.IdUnidad">
+                                                Ver detalles
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                            
+                        </tr>
+                    }
+                </tbody>
+                
+            </table>
+        </div>
+        
+
+        <div class="table-footer">
+            <span id="inventarioCount">Mostrando 0 de 0</span>
+
+            <div class="pagination-custom">
+                <button id="btnPrevPage" type="button" class="page-btn">Anterior</button>
+                <button id="btnNextPage" type="button" class="page-btn">Siguiente</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@await Html.PartialAsync("~/Views/inventario/detallesUnidadModal.cshtml")
 
 @* Esto cambiar *@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="/js/inventario.js"></script>
-
+<script src="~/js/inventario.js"></script>
 @* libreria para ventalnillas emergentes *@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

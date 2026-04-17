@@ -4,171 +4,191 @@
     ViewData["Title"] = "Agregar unidad";
 }
 
-
 <form id="formularioAgregarUnidad" asp-action="agregarUnidad" method="post">
-    <div class="modal-body">
-        
-        <h1>REGISTRO DE NUEVO DONANTE</h1>
 
-        <div class="mb-3">
-            <label>Id donación</label>
-            <input id="idUnidad" name="idUnidad" type="text" class="form-control" readonly />
+    <div class="inventario-modal-body">
+
+        <!-- ID -->
+                   <div class="inventario-form-grid">
+
+
+              <div class="inventario-field ">
+
+                <label>ID DONACION</label>
+                <input class="form-noActivo" id="idUnidad" name="idUnidad" type="text" readonly />
+            </div>
+
+            <div class="inventario-field">
+                <label>ESTADO DEL VIAL</label>
+                <select name="estadoUnidad" class="inventario-select form-noActivo" readonly>
+                    <option value="Disponible">Disponible</option>
+                </select>
+            </div>
+
+            <div class="inventario-field">
+                <label>Cantidad</label>
+                <input class="form-noActivo" name="cantidad" value="1" type="text" readonly />
+            </div>
+
         </div>
 
-        <div class="mb-3">
-            <label class="form-label">Tipo de Sangre</label>
-            <select name="tipoSangre" class="form-select">
-                <option value="" selected disabled>Seleccione un tipo...</option>
-                <option value="A">Tipo A</option>
-                <option value="B">Tipo B</option>
-                <option value="AB">Tipo AB</option>
-                <option value="O">Tipo O</option>
-            </select>
+        <!-- GRID PRINCIPAL -->
+        <div class="inventario-form-grid">
+
+            <div class="inventario-field">
+                <label>TIPO DE SANGRE</label>
+                <select name="tipoSangre" class="inventario-select">
+                    <option value="" selected disabled>Seleccione un tipo...</option>
+                    <option value="A">Tipo A</option>
+                    <option value="B">Tipo B</option>
+                    <option value="AB">Tipo AB</option>
+                    <option value="O">Tipo O</option>
+                </select>
+            </div>
+
+            <div class="inventario-field">
+                <label>FACTOR RH</label>
+                <select name="factorRh" class="inventario-select">
+                    <option value="+">+</option>
+                    <option value="-">-</option>
+                </select>
+            </div>
+
         </div>
 
-        <div class="mb-3">
-    <label class="form-label">Factor RH</label>
-    <select name="factorRh" class="form-select">
-        <option value="+">+</option>
-        <option value="-">-</option>
-    </select>
-        </div>
+        <!-- FECHAS -->
+        <div class="inventario-form-grid">
 
-        <div class="form-group mb-3">
-            <label class="control-label">Fecha de Ingreso</label>
-            <input name="fechaIngreso" type="datetime-local" class="form-control" />
-        </div>
+            <div class="inventario-field">
+                <label>FECHA DE INGRESO</label>
+                <input name="fechaIngreso" type="date" />
+            </div>
 
-        <div class="form-group mb-3">
-            <label class="control-label">Fecha de Caducidad</label>
-            <input name="fechaCaducidad" type="datetime-local" class="form-control" />
-        </div>
+            <div class="inventario-field">
+                <label>Fecha de Caducidad</label>
+                <input name="fechaCaducidad" type="date" />
+            </div>
 
-        <div class="mb-3">
-            <label class="form-label">Estado del vial</label>
-            <select name="estadoUnidad" class="form-select" readonly>
-                <option value="Disponible">Disponible</option>
-            </select>
         </div>
 
 
-        <div class="mb-3">
-            <label>Cantidad</label>
-            <input name="cantidad" value="1" type="text" class="form-control" readonly required />
-        </div>
 
-        <p>Informacion personal</p>
+        <!-- PERSONAL -->
+        <div class="inventario-form-section">
+            <h4>INFORMACIÓN PERSONAL</h4>
 
-        <div class="mb-3">
-            <label>DUI</label>
-            <input name="dui" type="text" class="form-control" placeholder="00000000-0" required />
-        </div>
+          
+            <div class="inventario-form-grid ">
 
-        <div class="mb-3">
-            <label>Nombre</label>
-            <input name="nombre" type="text" class="form-control" placeholder="Nombre" required />
-        </div>
+                 <div class="inventario-field">
+                <label>DUI</label>
+                <input name="dui" type="text" placeholder="00000000-0" />
+            </div>
 
-        <div class="mb-3">
-            <label>Apellido</label>
-            <input name="apellido" type="text" class="form-control" placeholder="Apellido" required />
-        </div>
 
-        <div class="mb-3">
-            <label>Telefono</label>
-            <input name="telefono" type="text" class="form-control" placeholder="Telefono" required />
-        </div>
+                <div class="inventario-field">
+                    <label>NOMBRE</label>
+                    <input name="nombre" type="text" placeholder="Luis Eduardo"/>
+                </div>
 
-        @* pESO NO PUEDE SER MENOR A 50 KG, ESO ES EXCLUYENTE, NO DEJAR AVANZAR EN ESE CASO  *@
-        <div class="mb-3">
-            <label>Peso</label>
-            <input name="peso" type="text" class="form-control" placeholder="50 kg" required />
-        </div>
+                <div class="inventario-field">
+                    <label>APELLIDO</label>
+                    <input name="apellido" type="text" placeholder="Lopez Orantes" />
+                </div>
 
-        @* NO ES NECESARIO MANDAR ESTA INFORMACION MAS QUE PARA COMPROBAR *@
-        <p>Cuestionaria de elegibilidad</p>
-        <div class="mb-3">
-            <label class="d-block mb-2">¿Ha desayunado hoy?</label>
-            <div class="btn-group" role="group" aria-label="Selección de desayuno">
+            </div>
 
-                <input type="radio" class="btn-check" name="haDesayunado" id="siDesayuno" value="true" autocomplete="off">
-                <label class="btn btn-outline-success" for="siDesayuno">
-                    <i class="bi bi-check-circle"></i> Sí
-                </label>
 
-                <input type="radio" class="btn-check" name="haDesayunado" id="noDesayuno" value="false" autocomplete="off" checked>
-                <label class="btn btn-outline-danger" for="noDesayuno">No</label>
+            <div class="inventario-form-grid ">
 
+            <div class="inventario-field">
+                <label>TELÉFONO</label>
+                <input name="telefono" type="text"  placeholder="0000-0000"/>
+            </div>
+
+            <div class="inventario-field">
+                <label>PESO (KG)</label>
+                <input name="peso" type="text" placeholder="50 kg" />
             </div>
         </div>
 
-        <div class="mb-3">
-            <label class="d-block mb-2">¿Durmio al menos 6 horas?</label>
-            <div class="btn-group" role="group" aria-label="Selección dormir">
+                    </div>
 
-                <input type="radio" class="btn-check" name="haDormido" id="siDormir" value="true" autocomplete="off">
-                <label class="btn btn-outline-success" for="siDormir">
-                    <i class="bi bi-check-circle"></i> Sí
-                </label>
 
-                <input type="radio" class="btn-check" name="haDormido" id="noDormir" value="false" autocomplete="off" checked>
-                <label class="btn btn-outline-danger" for="noDormir">No</label>
+        <!-- CUESTIONARIO -->
+        <div class="inventario-form-section">
+            <h4>CUESTIONARIO DE ELEGIBILIDAD</h4>
+
+            <div class="eligibility-grid">
+
+                <div class="eligibility-item">
+                    <span>¿Ha desayunado hoy?</span>
+                    <div class="toggle-group" data-target="haDesayunado">
+                        <button type="button" class="toggle-option active" data-value="true">Sí</button>
+                        <button type="button" class="toggle-option" data-value="false">No</button>
+                    </div>
+                </div>
+
+                <div class="eligibility-item">
+                    <span>¿Durmió al menos 6 horas?</span>
+                    <div class="toggle-group" data-target="haDormido">
+                        <button type="button" class="toggle-option active" data-value="true">Sí</button>
+                        <button type="button" class="toggle-option" data-value="false">No</button>
+                    </div>
+                </div>
+
+                <div class="eligibility-item">
+                    <span>¿Tatuajes últimos 12 meses?</span>
+                    <div class="toggle-group danger-group" data-target="realizadoTratuajes">
+                        <button type="button" class="toggle-option active" data-value="true">Sí</button>
+                        <button type="button" class="toggle-option" data-value="false">No</button>
+                    </div>
+                </div>
+
+                <div class="eligibility-item">
+                    <span>¿Ha consumido alcohol 48h?</span>
+                    <div class="toggle-group danger-group" data-target="haConsumido">
+                        <button type="button" class="toggle-option active" data-value="true">Sí</button>
+                        <button type="button" class="toggle-option" data-value="false">No</button>
+                    </div>
+                </div>
 
             </div>
+
+            <input type="hidden" name="haDesayunado" id="haDesayunado" value="true" />
+            <input type="hidden" name="haDormido" id="haDormido" value="true" />
+            <input type="hidden" name="realizadoTratuajes" id="realizadoTratuajes" value="true" />
+            <input type="hidden" name="haConsumido" id="haConsumido" value="true" />
         </div>
 
-        <div class="mb-3">
-            <label class="d-block mb-2">¿Tatuajes ultimos 12 meses?</label>
-            <div class="btn-group" role="group" aria-label="Selección tatuajes">
+        <!-- ENFERMEDADES, EXCLUYENTES, si las tienen no donan-->
+        <div class="inventario-form-section">
+            <h4>ANTECEDENTES Y EXCLUSIÓN</h4>
 
-                <input type="radio" class="btn-check" name="realizadoTratuajes" id="siTatuajes" value="true" autocomplete="off">
-                <label class="btn btn-outline-success" for="siTatuajes">
-                    <i class="bi bi-check-circle"></i> Sí
-                </label>
-
-                <input type="radio" class="btn-check" name="realizadoTratuajes" id="noTatuajes" value="false" autocomplete="off" checked>
-                <label class="btn btn-outline-danger" for="noTatuajes">No</label>
-
+            <div class="inventario-field full">
+                <label>Tiene alguna enfermedad cronica?</label>
+                <select name="enfermedades" class="inventario-select">
+                    <option value="Nada">No posee enfermedad</option>
+                    <option value="hepatitis">Hepatitis</option>
+                    <option value="SIDA">SIDA</option>
+                    <option value="Anemia">Anemia</option>
+                    <option value="Sifiles">Sifiles</option>
+                    <option value="Priones">infecciones por priones.</option>
+                </select>
             </div>
+
         </div>
 
-        <div class="mb-3">
-            <label class="d-block mb-2">¿Ha consumido alcohol las ultimas 48 horas?</label>
-            <div class="btn-group" role="group" aria-label="Selección tatuajes">
+        <div class="inventario-modal-footer">
+            <button type="button" id="btnCancelarDonacion" class="btn-outline-custom">
+                Cancelar
+            </button>
 
-                <input type="radio" class="btn-check" name="haConsumido" id="siConsumo" value="true" autocomplete="off">
-                <label class="btn btn-outline-success" for="siConsumo">
-                    <i class="bi bi-check-circle"></i> Sí
-                </label>
-
-                <input type="radio" class="btn-check" name="haConsumido" id="noConsumo" value="false" autocomplete="off" checked>
-                <label class="btn btn-outline-danger" for="noConsumo">No</label>
-
-            </div>
+            <button type="submit" class="add-btn">
+                Guardar Cambios
+            </button>
         </div>
 
-        <p>Antecedentes y Exclusion</p>
-
-        <div class="mb-3">
-            <label class="form-label">Tiene alguna enfermedad cronica?</label>
-            <select name="enfermedades" class="form-select">
-                <option value="Nada">No posee enfermedad</option>
-                <option value="hepatitis">Hepatitis</option>
-                <option value="SIDA">SIDA</option>
-                <option value="Anemia">Anemia</option>
-                <option value="Sifiles">Sifiles</option>
-                <option value="Priones">infecciones por priones.</option>
-            </select>
-        </div>
-
-        @* informacion para ser excluyente *@
-
-
-      
-    <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
     </div>
-    </div>
-    
+
 </form>
