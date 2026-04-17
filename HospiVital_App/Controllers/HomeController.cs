@@ -183,7 +183,7 @@ namespace HospiVital_App.Controllers
                 return RedirectToAction("Index");
             }
 
-            switch (rol)B
+            switch (rol)
             {
                 case "Administrador":
                     return RedirectToAction("AdminDashboard"); //aquí cambienb lo que necesiten, ahí agregan las vistas que quieran para cada rol, solo es cuestión de crear/agregar la vista correspondiente
