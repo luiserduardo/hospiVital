@@ -10,9 +10,7 @@ namespace HospiVital_App.Controllers
     {
         private readonly ILogger<HomeController> _logger;
 
-
         // DATOS DE PRUEBA - Usuarios en memoria
-
         private static readonly List<Usuario> _usuarios = new List<Usuario>
         {
             new Usuario
@@ -46,28 +44,28 @@ namespace HospiVital_App.Controllers
             _logger = logger;
         }
 
+        // --- MÉTODOS DE AUTENTICACIÓN ---
 
-        // GET: /Home/Index - Muestra el login
-
+        // GET: /Home/Index - Cambiado de Login a Index para coincidir con la ruta por defecto
         [HttpGet]
         public IActionResult Index()
         {
-            // Si ya esta autenticado, redirigir segun su rol
+            // Si ya está autenticado, redirigir según su rol
             if (HttpContext.Session.GetString("UsuarioId") != null)
             {
                 return RedirigirSegunRol(HttpContext.Session.GetString("RolUsuario"));
             }
 
+            // Busca específicamente el archivo Login.cshtml en Views/Home/
             return View("Login");
         }
 
         // POST: /Home/Index - Procesa el formulario de login
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Index(LoginViewModel model)
         {
-            // Validar que el modelo sea valido (Data Annotations)
+            // Validar que el modelo sea válido
             if (!ModelState.IsValid)
             {
                 return View("Login", model);
@@ -85,87 +83,54 @@ namespace HospiVital_App.Controllers
                 return View("Login", model);
             }
 
-            // Autenticacion exitosa - Guardar datos en sesion
+            // Autenticación exitosa - Guardar datos en sesión
             HttpContext.Session.SetString("UsuarioId", usuario.Id.ToString());
             HttpContext.Session.SetString("Username", usuario.Username);
             HttpContext.Session.SetString("NombreCompleto", usuario.NombreCompleto);
             HttpContext.Session.SetString("RolUsuario", usuario.Rol.ToString());
 
-            // Redirigir segun el rol del usuario
             return RedirigirSegunRol(usuario.Rol.ToString());
         }
 
-        // POST: /Home/Logout - Cierra la sesion del usuario
-
+        // POST: /Home/Logout - Cierra la sesión
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Logout()
         {
-            // Limpiar la sesion
             HttpContext.Session.Clear();
-
-            // Redirigir al login
             return RedirectToAction("Index");
         }
 
-        // GET: /Home/AccessDenied - Vista de acceso denegado
+        // --- VISTAS POR ROL ---
 
-        [HttpGet]
-        public IActionResult AccessDenied()
-        {
-            return View();
-        }
-
-
-        // VISTAS POR ROL (dentro de Home)
-
-
-        // GET: /Home/AdminDashboard
         public IActionResult AdminDashboard()
         {
-            if (!VerificarAutenticacion("Administrador"))
-            {
-                return RedirectToAction("Index");
-            }
-
-            ViewBag.NombreUsuario = HttpContext.Session.GetString("NombreCompleto");
-            ViewBag.Rol = HttpContext.Session.GetString("RolUsuario");
+            if (!VerificarAutenticacion("Administrador")) return RedirectToAction("Index");
+            
+            CargarDatosVista();
             return View();
         }
 
-        // GET: /Home/RegistroRetiro
         public IActionResult RegistroRetiro()
         {
-            if (!VerificarAutenticacion("Medico"))
-            {
-                return RedirectToAction("Index");
-            }
-
-            ViewBag.NombreUsuario = HttpContext.Session.GetString("NombreCompleto");
-            ViewBag.Rol = HttpContext.Session.GetString("RolUsuario");
+            if (!VerificarAutenticacion("Medico")) return RedirectToAction("Index");
+            
+            CargarDatosVista();
             return View();
         }
 
-        // GET: /Home/IngresoSangre
         public IActionResult IngresoSangre()
         {
-            if (!VerificarAutenticacion("TecnicoMedico"))
-            {
-                return RedirectToAction("Index");
-            }
-
-            ViewBag.NombreUsuario = HttpContext.Session.GetString("NombreCompleto");
-            ViewBag.Rol = HttpContext.Session.GetString("RolUsuario");
+            if (!VerificarAutenticacion("TecnicoMedico")) return RedirectToAction("Index");
+            
+            CargarDatosVista();
             return View();
         }
 
-        // OTRAS VISTAS 
+        // --- OTRAS VISTAS ---
 
-
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+        public IActionResult AccessDenied() => View();
+        public IActionResult Privacy() => View();
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
@@ -173,44 +138,32 @@ namespace HospiVital_App.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
-        // METODOS PRIVADOS
+        // --- MÉTODOS PRIVADOS ---
 
+        private void CargarDatosVista()
+        {
+            ViewBag.NombreUsuario = HttpContext.Session.GetString("NombreCompleto");
+            ViewBag.Rol = HttpContext.Session.GetString("RolUsuario");
+        }
 
         private IActionResult RedirigirSegunRol(string rol)
         {
-            if (string.IsNullOrEmpty(rol))
+            if (string.IsNullOrEmpty(rol)) return RedirectToAction("Index");
+
+            return rol switch
             {
-                return RedirectToAction("Index");
-            }
-
-            switch (rol)
-            {
-                case "Administrador":
-                    return RedirectToAction("AdminDashboard"); //aquí cambienb lo que necesiten, ahí agregan las vistas que quieran para cada rol, solo es cuestión de crear/agregar la vista correspondiente
-
-                case "Medico":
-                    return RedirectToAction("RegistroRetiro");
-
-                case "TecnicoMedico":
-                    return RedirectToAction("IngresoSangre");
-
-                default:
-                    return RedirectToAction("Index");
-            }
+                "Administrador" => RedirectToAction("AdminDashboard"),
+                "Medico" => RedirectToAction("RegistroRetiro"),
+                "TecnicoMedico" => RedirectToAction("IngresoSangre"),
+                _ => RedirectToAction("Index"),
+            };
         }
 
         private bool VerificarAutenticacion(string rolRequerido)
         {
             var usuarioId = HttpContext.Session.GetString("UsuarioId");
             var rolUsuario = HttpContext.Session.GetString("RolUsuario");
-
-            if (string.IsNullOrEmpty(usuarioId))
-            {
-                return false;
-            }
-
-            // Verificar si el rol coincide
-            return rolUsuario == rolRequerido;
+            return !string.IsNullOrEmpty(usuarioId) && rolUsuario == rolRequerido;
         }
     }
 }
