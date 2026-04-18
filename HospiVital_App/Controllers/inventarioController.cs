@@ -1,4 +1,6 @@
-﻿using HospiVital_App.Models;
+﻿using System.ComponentModel;
+using System.Globalization;
+using HospiVital_App.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HospiVital_App.Controllers
@@ -12,19 +14,47 @@ namespace HospiVital_App.Controllers
         static inventarioController()
         {
 
-            
+           
+            // Donantes de prueba adicionales para dar variedad
+            Donante d1 = new Donante(1, "Ana", "Martínez", "05123456-7", "7123-4567");
+            Donante d2 = new Donante(2, "Carlos", "Pérez", "03456789-2", "7234-5678");
+            Donante d3 = new Donante(3, "Elena", "Rodríguez", "02345671-5", "7345-6789");
+            Donante d4 = new Donante(4, "Juan", "López", "01987654-3", "7456-7890");
 
-                Donante donantePrueba = new Donante(0, "Roberto", "Gómez", "01234567-8", "7788-9900");
+            DateTime hoy = DateTime.Today;
+            Random rnd = new Random();
 
-                inventario.agregarUnidad(new unidadDeSangre("HP202693361252", "B", "+",
-    DateTime.Now, DateTime.Now.AddDays(-5), "Vencido", 500, donantePrueba));
+            // Arrays para aleatorizar
+            string[] grupos = { "A", "B", "O", "AB" };
+            string[] factores = { "+", "-" };
 
-                inventario.agregarUnidad(new unidadDeSangre("HP202693363113",  "A", "+",
-                    DateTime.Now, DateTime.Now.AddDays(2), "Disponible", 500, donantePrueba));
+            for (int i = 1; i <= 100; i++)
+            {
+                string grupo = grupos[rnd.Next(grupos.Length)];
+                string factor = factores[rnd.Next(factores.Length)];
 
-                inventario.agregarUnidad(new unidadDeSangre("HP202693361231",  "B", "-",
-                    DateTime.Now, DateTime.Now.AddDays(10), "Disponible", 500, donantePrueba));
-     }
+                // Alternamos fechas: algunos vencidos hace poco, otros vencen hoy, otros a futuro
+                int diasOffset = rnd.Next(-10, 20);
+                DateTime fechaCadu = hoy.AddDays(diasOffset);
+                string estado = fechaCadu < hoy ? "Vencido" : "Disponible";
+
+                // Seleccionamos un donante al azar de los 4 creados
+                Donante donanteAzar = (i % 4 == 0) ? d1 : (i % 3 == 0) ? d2 : (i % 2 == 0) ? d3 : d4;
+
+                inventario.agregarUnidad(new unidadDeSangre(
+                    $"HP2026{1000 + i}", 
+                    grupo,
+                    factor,
+                    hoy.AddDays(-5),     // Fecha Ingreso
+                    fechaCadu,           // Fecha Caducidad
+                    estado,
+                    450,                 // Cantidad ml
+                    donanteAzar
+                ));
+            }
+
+
+        }
         
 
 
@@ -113,5 +143,96 @@ namespace HospiVital_App.Controllers
             });
         }
 
+
+        // metodo para buscar unidades por id especifico
+        [HttpGet]
+        public ActionResult buscarUnidades(string termino)
+        {
+
+            //Recordatorio para despues de la entrega, una vez implementada db mejorar esto con la gestion de recurso
+
+            //si listas nulo crear una lista vacia
+            var lista = inventario.listaDisponibles() ?? new List<unidadDeSangre>();
+
+            if (!string.IsNullOrWhiteSpace(termino))
+            {
+                termino = termino.Trim().ToLower();
+
+                //filtra dentro de la lista y crear una nueva lista ya filtardo
+                lista = lista.Where(
+                    u =>
+                    u.IdUnidad.ToLower().Contains(termino)).ToList();
+            }
+
+            //mapeamos los datos como se quiere que se contrauyan
+            var resultado = lista.Select(u => new
+            {
+                idUnidad = u.IdUnidad,
+                tipoSangre = u.TipoSangre,
+                factorRh = u.FactorRh,
+                fechaIngreso = u.FechaIngreso.ToString("dd/MM/yyyy"),
+                fechaCaducidad = u.FechaCaducidad.ToString("dd/MM/yyyy"),
+                estadoUnidad = u.EstadoUnidad,
+                nombreDonante = u.Donante?.Nombre ?? "N/A",
+                apellidoDonante = u.Donante?.Apellido ?? "N/A"
+            });
+
+            //aqui mandar el resultado con el formato que se quiere
+            return Json(resultado);
+
+        }
+
+        //metodo para buscar segun el filtro aplicado
+        [HttpGet]
+        public ActionResult filtrarUnidades(string fecha, string estado, string tipoSangre)
+        {
+            //aqui tomamos la lista de dispnibles para ir filtrando secuencialmente
+            var listaFiltrada = inventario.listaDisponibles() ?? new List<unidadDeSangre>();
+
+//filtro rango de fechas
+            if (fecha != "todos")
+            {
+                DateTime hoy = DateTime.Today;
+                if (fecha == "hoy")
+                    listaFiltrada = listaFiltrada.Where(u => u.FechaCaducidad.Date == hoy).ToList();
+                else if (fecha == "7")
+                    listaFiltrada = listaFiltrada.Where(u => u.FechaCaducidad.Date >= hoy.AddDays(-7) && u.FechaCaducidad.Date <= hoy).ToList();
+                else if (fecha == "30")
+                    listaFiltrada = listaFiltrada.Where(u => u.FechaCaducidad.Date >= hoy.AddDays(-30) && u.FechaCaducidad.Date <= hoy).ToList();
+            }
+
+//Filtro estado
+            if (estado != "todos")
+            {
+                listaFiltrada = listaFiltrada.Where(u => u.EstadoUnidad.Equals(estado)).ToList();
+            }
+
+//filtro snagre
+            if (tipoSangre != "todos" && !string.IsNullOrEmpty(tipoSangre))
+            {
+//separar en grupo y factor
+                string grupo = tipoSangre.Substring(0, tipoSangre.Length - 1); 
+                string factor = tipoSangre.Substring(tipoSangre.Length - 1); 
+
+                listaFiltrada = listaFiltrada.Where(u =>
+                    u.TipoSangre.Equals(grupo) &&
+                    u.FactorRh == factor
+                ).ToList();
+            }
+
+            var resultado = listaFiltrada.Select(u => new
+            {
+                idUnidad = u.IdUnidad,
+                tipoSangre = u.TipoSangre,
+                factorRh = u.FactorRh,
+                fechaIngreso = u.FechaIngreso.ToString("dd/MM/yyyy"),
+                fechaCaducidad = u.FechaCaducidad.ToString("dd/MM/yyyy"),
+                estadoUnidad = u.EstadoUnidad,
+                nombreDonante = u.Donante?.Nombre ?? "N/A",
+                apellidoDonante = u.Donante?.Apellido ?? "N/A"
+            });
+
+            return Json(resultado);
+        }
     }
 }
