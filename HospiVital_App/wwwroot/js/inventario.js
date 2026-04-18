@@ -5,11 +5,7 @@
 
 //dom cargado
 $(document).ready(function () {
-
-
-
-
-        function generarCodigo() {
+       function generarCodigo() {
             return $.ajax({
                 url: '/inventario/generarCodigo',
                 type: 'GET'
@@ -300,21 +296,18 @@ $(document).ready(function () {
 
     
     function getBloodBadgeClass(tipo) {
-        // Eliminamos espacios por si acaso
         const t = tipo.trim().toUpperCase();
 
-        const mapas = {
-            'O+': 'badge-o-pos',
-            'O-': 'badge-o-neg',
-            'A+': 'badge-a-pos',
-            'A-': 'badge-a-neg',
-            'B+': 'badge-b-pos',
-            'B-': 'badge-b-neg',
-            'AB+': 'badge-ab-pos',
-            'AB-': 'badge-ab-neg'
-        };
-
-        return mapas[t] || 'badge-secondary';
+        return {
+            'A+': 'badge-blue',
+            'A-': 'badge-blue',
+            'B+': 'badge-primary',
+            'B-': 'badge-primary',
+            'AB+': 'badge-pink',
+            'AB-': 'badge-pink',
+            'O+': 'badge-orange',
+            'O-': 'badge-red'
+        }[t] || 'badge-warning';
     }
 
     // Función para el botón de los tres puntos (⋮)
@@ -327,9 +320,6 @@ $(document).ready(function () {
         menu.toggleClass("open");
     });
 
-
-    // --- CERRAR MODAL DE DETALLES ---
-
     $('#btnCerrarDetalles').on('click', function () {
         $('#inventarioDetallesBackdrop').removeClass('open');
     });
@@ -340,6 +330,140 @@ $(document).ready(function () {
         }
     });
 
-  
 
+    //Funcionalidad de busqueda en tiempo real  
+
+    let searchTimer = null;   
+
+    $("#inventarioSearch").on("input", function () {
+        clearTimeout(searchTimer);
+
+        const termino = $(this).val().trim();
+
+        searchTimer = setTimeout(function () {
+            buscarYRenderizar(termino);
+        }, 300);
+    });
+
+    function buscarYRenderizar(termino) {
+        $.ajax({
+            url: '/inventario/buscarUnidades',
+            type: 'GET',
+            data: { termino: termino }
+        })
+            .done(function (data) {
+                renderizarTabla(data);
+            })
+            .fail(function () {
+                Swal.fire("Error", "No se pudo realizar la búsqueda.", "error");
+            });
+    }
+
+    function renderizarTabla(unidades) {
+        const tbody = $("#inventarioTableBody");
+        tbody.empty();
+
+        if (unidades.length === 0) {
+            tbody.append(`
+            <tr>
+                <td colspan="6" style="text-align:center; padding: 2rem; color: var(--text-muted);">
+                    No se encontraron unidades.
+                </td>
+            </tr>
+        `);
+            $("#inventarioCount").text("Mostrando 0 de 0");
+            return;
+        }
+
+        unidades.forEach(function (u) {
+            const esVencido = u.estadoUnidad === "Vencido";
+            const bloodClass = getBloodBadgeClass(u.tipoSangre + u.factorRh);
+            const estadoClass = esVencido ? "badge-danger" : "badge-success";
+            const estadoLabel = esVencido ? "Vencido" : "Disponible";
+            const rowClass = esVencido ? "row-expired" : "";
+            const fechaClass = esVencido ? "unit-code" : "";
+
+            tbody.append(`
+            <tr class="${rowClass}">
+                <td class="unit-code">${u.idUnidad}</td>
+                <td>
+                    <span class="badge-soft ${bloodClass}">
+                        ${u.tipoSangre}${u.factorRh}
+                    </span>
+                </td>
+                <td>${u.fechaIngreso}</td>
+                <td class="${fechaClass}">${u.fechaCaducidad}</td>
+                <td>
+                    <span class="badge-soft ${estadoClass}">${estadoLabel}</span>
+                </td>
+                <td>
+                    <td class="actions-cell">
+                        <div class="actions-dropdown">
+                            <button type="button" class="actions-menu"
+                                    data-action-toggle="${u.idUnidad}">⋮</button>
+                            <div class="actions-popover"
+                                 data-action-menu="${u.idUnidad}">
+                                <button type="button" class="actions-popover-item"
+                                        data-view-detail="${u.idUnidad}">
+                                    Ver detalles
+                                </button>
+                            </div>
+                        </div>
+                    </td>
+                </td>
+            </tr>
+        `);
+        });
+
+        $("#inventarioCount").text(`Mostrando ${unidades.length} de ${unidades.length}`);
+    }
+
+
+    //funcionalidad para el filtro
+
+    $("#btnAplicarFiltros").on("click", function () {
+        aplicarFiltros();
+    });
+
+    $("#btnLimpiarFiltros").on("click", function () {
+        $("#filterFecha").val("all");
+        $("#filterEstado").val("all");
+        sangreSeleccionada = "";
+        $("#bloodFilterGrid .blood-filter-chip").removeClass("active");
+        $("#inventarioFilterPanel").removeClass("open");
+        aplicarFiltros();
+    });
+
+    function aplicarFiltros() {
+        const fechaVal = $("#filterFecha").val();
+        let fechaParam = "todos";
+        if (fechaVal === "today") fechaParam = "hoy";
+        else if (fechaVal === "last7") fechaParam = "7";
+        else if (fechaVal === "last30") fechaParam = "30";
+
+        const estadoParam = $("#filterEstado").val() === "all" ? "todos" : $("#filterEstado").val();
+        const sangreParam = sangreSeleccionada === "" ? "todos" : sangreSeleccionada;
+
+        $.ajax({
+            url: '/inventario/filtrarUnidades',
+            type: 'GET',
+            data: {
+                fecha: fechaParam,
+                estado: estadoParam,
+                tipoSangre: sangreParam
+            },
+            beforeSend: function () {
+                $("#inventarioTableBody").html(
+                    '<tr><td colspan="6" style="text-align:center; padding:1rem;">Filtrando...</td></tr>'
+                );
+            }
+        })
+            .done(function (data) {
+                renderizarTabla(data);
+                $("#inventarioFilterPanel").removeClass("open");
+            })
+            .fail(function () {
+                Swal.fire("Error", "No se pudieron aplicar los filtros.", "error");
+            });
+    }
 });
