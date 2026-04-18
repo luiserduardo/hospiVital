@@ -7,23 +7,32 @@
         private string apellido;
         private string tipoSangreRequerido;
         private string factorRhRequerido;
-        private int prioridad;
+        //Para genera el id
+        private static int ultimoId = 1000;
 
         //Constructor vacío
         public paciente()
         {
+            this.idPaciente = GenerarNuevoId();
         }
 
         //Constructor con parametros
-        public paciente(int idPaciente, string nombre, string apellido,
-                        string tipoSangreRequerido, string factorRhRequerido, int prioridad)
+        public paciente(string nombre, string apellido,
+                        string tipoSangreRequerido, string factorRhRequerido)
         {
-            this.IdPaciente = idPaciente;
+            this.IdPaciente = GenerarNuevoId();
             this.Nombre = nombre;
             this.Apellido = apellido;
             this.TipoSangreRequerido = tipoSangreRequerido;
             this.FactorRhRequerido = factorRhRequerido;
-            this.Prioridad = prioridad;
+
+        }
+
+        //Genera un id único automaticamente 
+        private static int GenerarNuevoId()
+        {
+            ultimoId++;
+            return ultimoId;
         }
 
         //Getters y Setters
@@ -57,10 +66,5 @@
             set => factorRhRequerido = value;
         }
 
-        public int Prioridad
-        {
-            get => prioridad;
-            set => prioridad = value;
-        }
     }
 }

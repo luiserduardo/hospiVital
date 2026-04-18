@@ -1,18 +1,26 @@
 ﻿using HospiVital_App.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 
 namespace HospiVital_App.Controllers
 {
     public class receptoresController : Controller
     {
-        //Paciente
-        private static colaPrioridadPaciente colaPacientes = new colaPrioridadPaciente();
-        private static List<unidadDeSangre> inventarioUnidades = new List<unidadDeSangre>();
-        //Servicio de Compatibilidad
-        private servicioCompatibilidad compatibilidad = new servicioCompatibilidad();
-        //Lista de Donativos
+        //Inventario de viales
+        private static colaPrioridadViales inventarioViales = new colaPrioridadViales();
+
+        //Lista de Pacientes
+        private static listaEnlazadaPacientes registroPacientes = new listaEnlazadaPacientes();
+
+        //Lista de Donantes
+        private static listaEnlazadaDonantes registroDonantes = new listaEnlazadaDonantes();
+
+        //Historial de donativos
         private static List<dynamic> asignacionesRealizadas = new List<dynamic>();
+
+        //Compatibilidad
+        private servicioCompatibilidad compatibilidad = new servicioCompatibilidad();
 
         // GET: receptoresController
         public ActionResult Index()
@@ -23,6 +31,8 @@ namespace HospiVital_App.Controllers
                 CargarDatosPrueba();
             }
 
+            ViewBag.TotalPacientes = registroPacientes.Total;
+            ViewBag.Completados = asignacionesRealizadas.Count;
 
             return View(asignacionesRealizadas);
         }
@@ -30,22 +40,37 @@ namespace HospiVital_App.Controllers
         //Método para simular datos iniciales
         private void CargarDatosPrueba()
         {
-            // Donante ficticio
-            Donante d1 = new Donante(1, "Juan", "Pérez", "000000-0", "7777-7777");
+            //Crear donantes
+            Donante d1 = new Donante(1, "Juan", "Pérez", "02345678-9", "7712-3456");
+            Donante d2 = new Donante(2, "María", "García", "05123456-1", "7100-9988");
+            Donante d3 = new Donante(3, "Carlos", "Hernández", "01010101-0", "2222-3333");
 
-            //Creamos una unidad y un paciente
-            unidadDeSangre u1 = new unidadDeSangre("B-1024-A", "A", "+", DateTime.Now, DateTime.Now.AddMonths(1), "Disponible", 450, d1);
+            registroDonantes.insertarFinal(d1);
+            registroDonantes.insertarFinal(d2);
+            registroDonantes.insertarFinal(d3);
 
-            //Creamos el registro de la tabla
-            asignacionesRealizadas.Add(new
-            {
-                IdReceptor = "REC-9201",
-                Beneficiario = "José López",
-                TipoSangre = "A+",
-                Donante = d1.Nombre + " " + d1.Apellido,
-                UnidadAsignada = u1.IdUnidad,
-                FechaTransfusion = DateTime.Now.ToString("dd Oct yyyy, HH:mm")
-            });
+            //Crear unidades de sangre
+            unidadDeSangre v1 = new unidadDeSangre("B-1024-A", "A", "+", DateTime.Now.AddDays(-5), DateTime.Now.AddDays(10), "Disponible", 450, d1);
+            unidadDeSangre v2 = new unidadDeSangre("B-1025-O", "O", "+", DateTime.Now.AddDays(-2), DateTime.Now.AddDays(30), "Disponible", 500, d2);
+            unidadDeSangre v3 = new unidadDeSangre("B-1026-B", "B", "-", DateTime.Now.AddDays(-1), DateTime.Now.AddDays(5), "Disponible", 450, d3);
+
+            inventarioViales.encolar(v1); 
+            inventarioViales.encolar(v2); 
+            inventarioViales.encolar(v3);
+
+            //Crear pacientes
+            paciente p1 = new paciente("José", "López", "A", "+");
+            paciente p2 = new paciente("Elena", "Rivas", "B", "-");
+            paciente p3 = new paciente("Roberto", "Sosa", "O", "+");
+            //Registrar pacientes
+            registroPacientes.insertarFinal(p1);
+            registroPacientes.insertarFinal(p2);
+            registroPacientes.insertarFinal(p3);
+
+            //Simular las asignaciones automáticas
+            procesarPacienteReciente(p1); 
+            procesarPacienteReciente(p2); 
+            procesarPacienteReciente(p3);
         }
 
         // GET: receptoresController/Details/5
@@ -67,8 +92,12 @@ namespace HospiVital_App.Controllers
         {
             try
             {
-                colaPacientes.encolar(nuevoPaciente, nuevoPaciente.Prioridad);
-                procesarSiguienteEnCola();
+                //Insertar nuevo paciente
+                registroPacientes.insertarFinal(nuevoPaciente);
+
+                //Intentar buscarle el vial de sangre inmediatamente
+                procesarPacienteReciente(nuevoPaciente);
+
                 return RedirectToAction(nameof(Index));
             }
             catch
@@ -77,36 +106,39 @@ namespace HospiVital_App.Controllers
             }
         }
 
-        private void procesarSiguienteEnCola()
+        private void procesarPacienteReciente(paciente p)
         {
-            //Verificamos que no esté vacía
-            if (colaPacientes.estaVacia()) return;
+            if (inventarioViales.estaVacia()) return;
 
-            //Obtenemos el primero según prioridad
-            paciente proximo = colaPacientes.verPrimero();
+            //Recorrido de la cola de viales
+            nodoUnidadSangre actualVial = inventarioViales.obtenerFrente();
+            nodoUnidadSangre anteriorVial = null;
 
-            //Revisamos compatibilidad
-            var compatibles = compatibilidad.filtrarCompatibles(inventarioUnidades, proximo);
-
-            if (compatibles.Count > 0)
+            while (actualVial != null)
             {
-                //Sacamos al paciente atendido de la cola
-                colaPacientes.desencolar();
-
-                //Removemos la unidad de sangre del inventario
-                unidadDeSangre unidadAsignada = compatibles[0];
-                inventarioUnidades.Remove(unidadAsignada);
-
-                //Registramos la asignación para la tabla de la vista
-                asignacionesRealizadas.Add(new
+                //Si el vial es compatible y no está vencido
+                if (compatibilidad.esCompatible(actualVial.Dato, p) && !actualVial.Dato.estaVencida())
                 {
-                    IdReceptor = "REC-" + proximo.IdPaciente,
-                    Beneficiario = proximo.Nombre + " " + proximo.Apellido,
-                    TipoSangre = proximo.TipoSangreRequerido + proximo.FactorRhRequerido,
-                    Donante = unidadAsignada.Donante.Nombre + " " + unidadAsignada.Donante.Apellido,
-                    UnidadAsignada = unidadAsignada.IdUnidad,
-                    FechaTransfusion = DateTime.Now.ToString("dd Oct yyyy, HH:mm")
-                });
+                    unidadDeSangre unidadAsignada = actualVial.Dato;
+
+                    if (anteriorVial == null) inventarioViales.desencolar();
+                    else anteriorVial.Sig = actualVial.Sig;
+
+                    //Registramos la asignación para la vista
+                    asignacionesRealizadas.Add(new
+                    {
+                        IdReceptor = "REC-" + p.IdPaciente,
+                        Beneficiario = p.Nombre + " " + p.Apellido,
+                        TipoSangre = p.TipoSangreRequerido + p.FactorRhRequerido,
+                        Donante = unidadAsignada.Donante.Nombre + " " + unidadAsignada.Donante.Apellido,
+                        UnidadAsignada = unidadAsignada.IdUnidad,
+                        FechaTransfusion = DateTime.Now.ToString("dd MMM yyyy, HH:mm", new CultureInfo("es-ES")).Replace(".", "")
+                    });
+
+                    return;
+                }
+                anteriorVial = actualVial;
+                actualVial = actualVial.Sig;
             }
         }
 
