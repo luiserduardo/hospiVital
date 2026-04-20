@@ -1,0 +1,136 @@
+﻿/* ===== COLORES SEGUN EL TIPO DE SANGRE ===== */
+
+
+.badge-sangre {
+    padding: 6px 12px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: inline-block;
+}
+
+.sangre-A {
+    background-color: rgba(231, 76, 60, 0.15);
+    color: #e74c3c;
+}
+
+.sangre-B {
+    background-color: rgba(241, 196, 15, 0.15);
+    color: #b7950b;
+}
+
+.sangre-AB {
+    background-color: rgba(142, 68, 173, 0.15);
+    color: #6c3483;
+}
+
+.sangre-O {
+    background-color: rgba(52, 152, 219, 0.15);
+    color: #2e86c1;
+}
+
+.modal-content {
+    border-radius: 18px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.modal-backdrop.show {
+    backdrop-filter: blur(4px);
+    background-color: rgba(0,0,0,0.2);
+}
+
+.modal h5 {
+    font-weight: 700;
+    font-size: 16px;
+    color: #2c2c2c;
+}
+
+.modal p.fw-bold {
+    font-size: 13px;
+    font-weight: 700;
+    color: #000000;
+    letter-spacing: 0.5px;
+}
+
+.modal .form-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #9aa4af;
+    margin-bottom: 4px;
+}
+
+.modal .form-control,
+.modal .form-select {
+    border: none;
+    border-bottom: 1px solid #e0e0e0;
+    border-radius: 0;
+    font-size: 14px;
+    padding-left: 0;
+    background: transparent;
+}
+
+    .modal .form-control:focus,
+    .modal .form-select:focus {
+        box-shadow: none;
+        border-bottom: 1px solid #dc3545;
+    }
+
+.modal .form-select {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+#tablaUnidades {
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f9fafb;
+}
+
+    #tablaUnidades th {
+        font-size: 11px;
+        color: #9aa4af;
+        border: none;
+    }
+
+    #tablaUnidades td {
+        font-size: 13px;
+        border: none;
+    }
+
+    #tablaUnidades tbody tr {
+        background: #fff;
+        border-radius: 10px;
+    }
+
+
+.btn-seleccionar {
+    background: #dc3545;
+    border: none;
+    border-radius: 20px;
+    font-size: 12px;
+    padding: 5px 14px;
+}
+
+    .btn-seleccionar.btn-success {
+        background: #28a745 !important;
+    }
+
+.btn-guardar {
+    background: #dc3545;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-weight: 600;
+}
+
+.btn-cancelar {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+#filtroTexto {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 10px;
+}

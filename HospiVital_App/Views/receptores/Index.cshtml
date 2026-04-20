@@ -1,31 +1,12 @@
 ﻿@model IEnumerable<dynamic>
 
 @{
-    ViewData["Title"] = "Receptores";
+    ViewData["Title"] = "Registro de Beneficiarios";
 }
-
+<link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/receptores.css" asp-append-version="true" />
 <div class="container-fluid mt-4">
-
-    <div class="card shadow-sm mb-4 border-0">
-        <div class="bg-white border-bottom w-100 px-4 py-3 d-flex justify-content-between align-items-center"
-             style="margin-top: -24px;">
-
-            <h4 class="mb-0 fw-semibold">Registro de receptores</h4>
-
-            <div class="d-flex align-items-center gap-3">
-                <button class="btn btn-outline-danger">
-                    <i class="bi bi-box-arrow-right"></i> Cerrar sesión
-                </button>
-
-                <div class="bg-light rounded-circle d-flex justify-content-center align-items-center"
-                     style="width:40px; height:40px;">
-                    <i class="bi bi-person-fill"></i>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
+    
     <!-- CARDS -->
     <div class="row mb-4">
 
@@ -55,22 +36,39 @@
 
     </div>
 
+    @await Html.PartialAsync("FormularioAgregarDonativo")
+
     <!-- TABLA -->
     <div class="card p-3 mb-3 shadow-sm">
         <div class="d-flex justify-content-between align-items-center flex-nowrap gap-2 mb-3">
 
             <div class="position-relative" style="min-width: 250px;">
                 <i class="bi bi-search position-absolute" style="left: 10px; top: 10px; color: gray;"></i>
-                <input type="text" class="form-control ps-5" placeholder="ID o nombre del paciente" />
+                <input id="buscador" type="text" class="form-control ps-5" placeholder="ID o nombre del paciente" />
             </div>
 
             <div class="d-flex flex-nowrap gap-2">
-                <button class="btn btn-outline-secondary">
-                    <i class="bi bi-funnel"></i> Filtrar
-                </button>
 
-                <button class="btn btn-danger text-nowrap">
-                    <i class="bi bi-plus-circle"></i> Agregar nuevo donativo
+                <div class="dropdown">
+                    <button class="btn btn-filtro dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-funnel me-2"></i> Filtrar
+                    </button>
+
+                    <ul class="dropdown-menu p-2 shadow-sm">
+                        <li><a class="dropdown-item filtro-item" data-tipo="">Todos</a></li>
+                        <li><a class="dropdown-item filtro-item" data-tipo="A+">A+</a></li>
+                        <li><a class="dropdown-item filtro-item" data-tipo="A-">A-</a></li>
+                        <li><a class="dropdown-item filtro-item" data-tipo="B+">B+</a></li>
+                        <li><a class="dropdown-item filtro-item" data-tipo="B-">B-</a></li>
+                        <li><a class="dropdown-item filtro-item" data-tipo="AB+">AB+</a></li>
+                        <li><a class="dropdown-item filtro-item" data-tipo="AB-">AB-</a></li>
+                        <li><a class="dropdown-item filtro-item" data-tipo="O+">O+</a></li>
+                        <li><a class="dropdown-item filtro-item" data-tipo="O-">O-</a></li>
+                    </ul>
+                </div>
+
+                <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalReceptor">
+                    + Agregar nuevo donativo
                 </button>
             </div>
 
@@ -79,11 +77,11 @@
 
     <div class="card shadow-sm">
         <div class="table-responsive">
-            <table class="table align-middle">
+            <table id="tablaReceptores" class="table align-middle">
                 <thead class="table-light">
                     <tr>
                         <th>ID RECEPTOR</th>
-                        <th>BENEDICIARIO</th>
+                        <th>BENEFICIARIO</th>
                         <th>TIPO SANGRE</th>
                         <th>DONANTE</th>
                         <th>UNIDAD</th>
@@ -95,13 +93,25 @@
                 <tbody>
                     @foreach (var item in Model)
                     {
-                        <tr>
+                        <tr data-id="@item.IdReceptor"
+                            data-nombre="@item.Beneficiario.ToLower()"
+                            data-tipo="@item.TipoSangre">
+
                             <td>@item.IdReceptor</td>
                             <td>@item.Beneficiario</td>
 
                             <td>
-                                <span class="badge bg-primary">
-                                    @item.TipoSangre
+                                @{
+                                    var tipoCompleto = item.TipoSangre;
+                                    var tipo = tipoCompleto.Substring(0, tipoCompleto.Length - 1);
+                                    var rh = tipoCompleto.Substring(tipoCompleto.Length - 1);
+
+                                    var claseTipo = "sangre-" + tipo;
+                                    var claseRh = rh == "+" ? "rh-pos" : "rh-neg";
+                                }
+
+                                <span class="badge-sangre @claseTipo @claseRh">
+                                    @tipoCompleto
                                 </span>
                             </td>
 
@@ -159,3 +169,6 @@
         color: gray;
     }
 </style>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="~/js/receptores.js"></script>

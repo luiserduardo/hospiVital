@@ -1,0 +1,118 @@
+﻿<!-- MODAL -->
+<div class="modal fade modal-receptor" id="modalReceptor" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content p-4">
+
+            <!-- HEADER -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold">REGISTRO DE RECEPTOR Y ASIGNACIÓN</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <hr />
+
+            <!-- FORM -->
+            <form id="formularioReceptor" novalidate>
+
+                <p class="fw-bold">DATOS DEL RECEPTOR (PACIENTE)</p>
+
+                <div class="mb-3">
+                    <label class="form-label">DOCUMENTO ÚNICO DE IDENTIDAD (DUI)</label>
+                    <input type="text" name="dui" class="form-control" placeholder="00000000-0" required>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">NOMBRES</label>
+                        <input type="text" name="nombres" class="form-control" placeholder="Ej. María Carmen" required>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">APELLIDOS</label>
+                        <input type="text" name="apellidos" class="form-control" placeholder="Ej. Pérez Gómez" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">TIPO DE SANGRE REQUERIDO</label>
+                    <select name="tipoSangre" id="tipoSangre" class="form-select">
+                        <option value="">Seleccione</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                    </select>
+                </div>
+
+                <hr />
+
+                <div id="filtroContainer" class="mb-2 d-none">
+                    <span id="filtroTexto" class="badge bg-success bg-opacity-25 text-success"></span>
+                </div>
+
+                <!-- TABLA -->
+                <p class="fw-bold">UNIDAD COMPATIBLE (INVENTARIO)</p>
+
+                <div class="table-responsive mb-3">
+                    <table id="tablaUnidades" class="table table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID Vial</th>
+                                <th>Tipo</th>
+                                <th>Ubicación</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            <tr data-tipo="O+">
+                                <td>B-1027-0</td>
+                                <td>
+                                    <span class="badge bg-primary bg-opacity-25 text-primary">O+</span>
+                                </td>
+                                <td>Nevera A3 - Estante 2</td>
+                                <td>
+                                    <button type="button" class="btn btn-seleccionar btn-sm seleccionar" data-id="B-1027-0">
+                                        ✔ Seleccionar
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <tr data-tipo="A+">
+                                <td>A-8891-2</td>
+                                <td>
+                                    <span class="badge bg-danger bg-opacity-25 text-danger">A+</span>
+                                </td>
+                                <td>Nevera B1 - Estante 1</td>
+                                <td>
+                                    <button type="button" class="btn btn-seleccionar btn-sm seleccionar" data-id="B-1027-0">
+                                        ✔ Seleccionar
+                                    </button>
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- BOTONES -->
+                <div class="d-flex justify-content-end gap-3 mt-4">
+                    <button type="button" class="btn btn-cancelar" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="submit" class="btn btn-guardar">
+                        ⦿ Registrar y Asignar
+                    </button>
+                </div>
+
+                <input type="hidden" name="vialSeleccionado" id="vialSeleccionado">
+
+            </form>
+        </div>
+    </div>
+</div>
