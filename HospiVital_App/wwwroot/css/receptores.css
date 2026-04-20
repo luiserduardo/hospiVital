@@ -33,6 +33,7 @@
     border-radius: 18px;
     border: none;
     box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    overflow: visible !important;
 }
 
 .modal-backdrop.show {
@@ -133,4 +134,14 @@
     font-size: 11px;
     padding: 4px 10px;
     border-radius: 10px;
+}
+
+.form-select {
+    cursor: pointer;
+    position: relative;
+    z-index: 1060 !important;
+}
+
+.table-responsive {
+    overflow: visible !important;
 }

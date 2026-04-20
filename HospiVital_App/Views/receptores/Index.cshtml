@@ -26,7 +26,7 @@
             <div class="card shadow-sm p-3 d-flex flex-row justify-content-between align-items-center border-start border-success border-4">
                 <div>
                     <small>Completados Hoy</small>
-                    <h3 class="text-success">@ViewBag.CompletadosHoy</h3>
+                    <h3 class="text-success">@(ViewBag.CompletadosHoy ?? 0)</h3>
                 </div>
                 <div class="bg-success bg-opacity-10 p-3 rounded">
                     <i class="bi bi-check-circle-fill text-success fs-4"></i>
@@ -102,14 +102,13 @@
 
                             <td>
                                 @{
-                                    var tipoCompleto = item.TipoSangre;
-                                    var tipo = tipoCompleto.Substring(0, tipoCompleto.Length - 1);
-                                    var rh = tipoCompleto.Substring(tipoCompleto.Length - 1);
+                                    var tipoCompleto = item.TipoSangre.ToString().Trim();
+                                    var rh = tipoCompleto.EndsWith("+") ? "+" : "-";
+                                    var tipo = tipoCompleto.Replace("+", "").Replace("-", "");
 
                                     var claseTipo = "sangre-" + tipo;
                                     var claseRh = rh == "+" ? "rh-pos" : "rh-neg";
                                 }
-
                                 <span class="badge-sangre @claseTipo @claseRh">
                                     @tipoCompleto
                                 </span>
@@ -123,7 +122,33 @@
 
                             <td>@item.FechaTransfusion</td>
 
-                            <td>⋮</td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="btn btn-light btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu shadow-sm">
+                                        <li>
+                                            <a class="dropdown-item btn-editar"
+                                                   href="#"
+                                                   data-id="@item.IdReceptor"
+                                                   data-beneficiario="@item.Beneficiario"
+                                                   data-tipo="@item.TipoSangre"
+                                                   data-dui="@item.Dui">
+                                                <i class="bi bi-pencil-square me-2 text-primary"></i> Editar
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item text-danger btn-eliminar" href="#" data-id="@item.IdReceptor">
+                                                <i class="bi bi-trash me-2"></i> Eliminar
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
                         </tr>
                     }
                 </tbody>

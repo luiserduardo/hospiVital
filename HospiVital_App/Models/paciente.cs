@@ -3,6 +3,7 @@
     public class paciente
     {
         private int idPaciente;
+        private string dui;
         private string nombre;
         private string apellido;
         private string tipoSangreRequerido;
@@ -17,10 +18,11 @@
         }
 
         //Constructor con parametros
-        public paciente(string nombre, string apellido,
+        public paciente(string dui, string nombre, string apellido,
                         string tipoSangreRequerido, string factorRhRequerido)
         {
             this.IdPaciente = GenerarNuevoId();
+            this.Dui = dui;
             this.Nombre = nombre;
             this.Apellido = apellido;
             this.TipoSangreRequerido = tipoSangreRequerido;
@@ -42,6 +44,11 @@
             set => idPaciente = value;
         }
 
+        public string Dui
+        {
+            get => dui;
+            set => dui = value;
+        }
         public string Nombre
         {
             get => nombre;

@@ -1,9 +1,7 @@
-﻿<!-- MODAL -->
-<div class="modal fade modal-receptor" id="modalReceptor" tabindex="-1">
+﻿<div class="modal fade modal-receptor" id="modalReceptor">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content p-4">
 
-            <!-- HEADER -->
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="fw-bold">REGISTRO DE RECEPTOR Y ASIGNACIÓN</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -11,9 +9,9 @@
 
             <hr />
 
-            <!-- FORM -->
-            <form id="formularioReceptor" novalidate>
-
+            <form id="formularioReceptor" action="/receptores/RegistrarAsignacion" method="post" novalidate>
+                @Html.AntiForgeryToken()
+                
                 <p class="fw-bold">DATOS DEL RECEPTOR (PACIENTE)</p>
 
                 <div class="mb-3">
@@ -35,7 +33,7 @@
 
                 <div class="mb-4">
                     <label class="form-label">TIPO DE SANGRE REQUERIDO</label>
-                    <select name="tipoSangre" id="tipoSangre" class="form-select">
+                    <select name="tipoSangre" id="tipoSangre" class="form-select" required>
                         <option value="">Seleccione</option>
                         <option value="O+">O+</option>
                         <option value="O-">O-</option>
@@ -54,7 +52,6 @@
                     <span id="filtroTexto" class="badge bg-success bg-opacity-25 text-success"></span>
                 </div>
 
-                <!-- TABLA -->
                 <p class="fw-bold">UNIDAD COMPATIBLE (INVENTARIO)</p>
 
                 <div class="table-responsive mb-3">
@@ -68,49 +65,24 @@
                             </tr>
                         </thead>
                         <tbody>
-
-                            <tr data-tipo="O+">
-                                <td>B-1027-0</td>
-                                <td>
-                                    <span class="badge bg-primary bg-opacity-25 text-primary">O+</span>
-                                </td>
-                                <td>Nevera A3 - Estante 2</td>
-                                <td>
-                                    <button type="button" class="btn btn-seleccionar btn-sm seleccionar" data-id="B-1027-0">
-                                        ✔ Seleccionar
-                                    </button>
-                                </td>
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">Seleccione un tipo de sangre para buscar viales</td>
                             </tr>
-
-                            <tr data-tipo="A+">
-                                <td>A-8891-2</td>
-                                <td>
-                                    <span class="badge bg-danger bg-opacity-25 text-danger">A+</span>
-                                </td>
-                                <td>Nevera B1 - Estante 1</td>
-                                <td>
-                                    <button type="button" class="btn btn-seleccionar btn-sm seleccionar" data-id="B-1027-0">
-                                        ✔ Seleccionar
-                                    </button>
-                                </td>
-                            </tr>
-
                         </tbody>
                     </table>
                 </div>
 
-                <!-- BOTONES -->
                 <div class="d-flex justify-content-end gap-3 mt-4">
-                    <button type="button" class="btn btn-cancelar" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         Cancelar
                     </button>
 
-                    <button type="submit" class="btn btn-guardar">
+                    <button type="submit" class="btn btn-danger">
                         ⦿ Registrar y Asignar
                     </button>
                 </div>
 
-                <input type="hidden" name="vialSeleccionado" id="vialSeleccionado">
+                <input type="hidden" name="vialId" id="vialSeleccionado">
 
             </form>
         </div>
