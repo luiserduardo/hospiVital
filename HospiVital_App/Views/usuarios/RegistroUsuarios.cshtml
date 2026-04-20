@@ -1,0 +1,33 @@
+﻿@model List<HospiVital_App.Models.AppUser>
+
+@{
+    ViewData["Title"] = "Registro de Usuarios";
+}
+
+<div class="content-card">
+    <div class="content-card-body">
+        <h2 style="margin-bottom: 18px;">Usuarios del sistema</h2>
+
+        <div class="table-wrap">
+            <table class="table-modern">
+                <thead>
+                    <tr>
+                        <th>USUARIO</th>
+                        <th>NOMBRE</th>
+                        <th>ROL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.Usuario</td>
+                            <td>@item.Nombre</td>
+                            <td>@item.Rol</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
