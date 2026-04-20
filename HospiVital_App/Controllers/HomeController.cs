@@ -1,11 +1,12 @@
 using HospiVital.Models;
+using HospiVital_App.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace HospiVital.Controllers
+namespace HospiVital_App.Controllers
 {
     public class HomeController : Controller
     {
@@ -15,7 +16,7 @@ namespace HospiVital.Controllers
         {
             if (User.Identity != null && User.Identity.IsAuthenticated)
             {
-                return RedirectToAction("Inicio");
+                return RedirectByRole();
             }
 
             return View(new LoginViewModel());
@@ -31,12 +32,21 @@ namespace HospiVital.Controllers
                 return View(model);
             }
 
-            // Prototipo:
-            // si el formulario es válido, se autentica al usuario que escribió.
-            // Luego esto se reemplaza por validación real en backend.
+            var usuario = usuariosController.ValidarUsuario(
+                model.Usuario ?? string.Empty,
+                model.Contrasena ?? string.Empty);
+
+            if (usuario == null)
+            {
+                ModelState.AddModelError(string.Empty, "Usuario o contraseña incorrectos.");
+                return View(model);
+            }
+
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, model.Usuario ?? string.Empty)
+                new Claim(ClaimTypes.Name, usuario.Nombre),
+                new Claim(ClaimTypes.Role, usuario.Rol),
+                new Claim("Username", usuario.Usuario)
             };
 
             var identity = new ClaimsIdentity(
@@ -49,38 +59,17 @@ namespace HospiVital.Controllers
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal);
 
-            return RedirectToAction("Inicio");
+            return RedirectByRole();
         }
 
-        [Authorize]
-        [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
+        [Authorize(Roles = $"{AppRoles.AsistenteMedico},{AppRoles.Medico},{AppRoles.Admin}")]
         public IActionResult Inicio()
         {
             return View();
         }
 
-        [Authorize]
-        public IActionResult obtenerListado()
-        {
-            return View("~/Views/Inventario/obtenerListado.cshtml");
-        }
-
-        [Authorize]
-        [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
+        [Authorize(Roles = AppRoles.Medico)]
         public IActionResult Receptores()
-        {
-            return View();
-        }
-
-        [Authorize]
-        [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
-        [AllowAnonymous]
-        public IActionResult Error()
         {
             return View();
         }
@@ -91,12 +80,15 @@ namespace HospiVital.Controllers
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-
-            Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
-            Response.Headers["Pragma"] = "no-cache";
-            Response.Headers["Expires"] = "0";
-
             return RedirectToAction("Login");
+        }
+
+        private IActionResult RedirectByRole()
+        {
+            if (User.IsInRole(AppRoles.Admin))
+                return RedirectToAction("RegistroUsuarios", "usuarios");
+
+            return RedirectToAction("Inicio");
         }
     }
 }

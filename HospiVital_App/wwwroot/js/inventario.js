@@ -14,7 +14,7 @@ $(document).ready(function () {
 
         // ABRIR MODAL
         $('#btnAbrirDonacion').on('click', function () {
-
+            setFechaHoy();
             generarCodigo()
                 .done(function (data) {
                     $('#idUnidad').val(data);
@@ -88,8 +88,6 @@ $(document).ready(function () {
         let fechaIngresoStr = $("input[name='fechaIngreso']").val();
         let fechaCaducidadStr = $("input[name='fechaCaducidad']").val();
 
-        let hoy = new Date();
-        hoy.setHours(0, 0, 0, 0);
 
         if (!tipoSangre) {
             $("select[name='tipoSangre']").addClass("is-invalid");
@@ -137,7 +135,7 @@ $(document).ready(function () {
         let fechaCaducidad = new Date(fechaCaducidadStr);
 
        
-
+        let hoy = new Date().toISOString().split("T")[0];
         if (fechaIngreso < hoy) {
             e.preventDefault();
             return mostrarError("input[name='fechaIngreso']", "La fecha de ingreso no puede ser anterior a hoy.");
@@ -172,22 +170,22 @@ $(document).ready(function () {
         }
 
       
-        if ($("input[name='haDesayunado']:checked").val() === "false") {
+        if ($("input[name='haDesayunado']").val() === "false") {
             e.preventDefault();
             return Swal.fire('Excluido', 'No haber desayunado lo vuelve excluyente.', 'error');
         }
 
-        if ($("input[name='haDormido']:checked").val() === "false") {
+        if ($("input[name='haDormido']").val() === "false") {
             e.preventDefault();
             return Swal.fire('Excluido', 'No haber dormido lo vuelve excluyente.', 'error');
         }
 
-        if ($("input[name='realizadoTratuajes']:checked").val() === "true") {
+        if ($("input[name='realizadoTratuajes']").val() === "true") {
             e.preventDefault();
             return Swal.fire('Excluido', 'Tatuajes recientes lo vuelven excluyente.', 'error');
         }
 
-        if ($("input[name='haConsumido']:checked").val() === "true") {
+        if ($("input[name='haConsumido']").val() === "true") {
             e.preventDefault();
             return Swal.fire('Excluido', 'Alcohol reciente lo vuelve excluyente.', 'error');
         }
@@ -209,6 +207,18 @@ $(document).ready(function () {
             confirmButtonColor: '#d33'
         });
         return false;
+    }
+
+    //funcion para recha automatica
+    function setFechaHoy() {
+        const hoy = new Date();
+        const yyyy = hoy.getFullYear();
+        const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+        const dd = String(hoy.getDate()).padStart(2, '0');
+
+        const fechaFormateada = `${yyyy}-${mm}-${dd}`;
+
+        $("input[name='fechaIngreso']").val(fechaFormateada);
     }
 
 
@@ -466,4 +476,120 @@ $(document).ready(function () {
                 Swal.fire("Error", "No se pudieron aplicar los filtros.", "error");
             });
     }
+
+
+    function formatearDui(valor) {
+        const numeros = valor.replace(/\D/g, "").slice(0, 9);
+        if (numeros.length <= 8) return numeros;
+        return numeros.slice(0, 8) + "-" + numeros.slice(8);
+    }
+
+    function formatearTelefono(valor) {
+        const numeros = valor.replace(/\D/g, "").slice(0, 8);
+        if (numeros.length <= 4) return numeros;
+        return numeros.slice(0, 4) + "-" + numeros.slice(4);
+    }
+
+
+    function formatearDui(valor) {
+        const numeros = valor.replace(/\D/g, "").slice(0, 9);
+        if (numeros.length <= 8) return numeros;
+        return numeros.slice(0, 8) + "-" + numeros.slice(8);
+    }
+
+    function formatearTelefono(valor) {
+        const numeros = valor.replace(/\D/g, "").slice(0, 8);
+        if (numeros.length <= 4) return numeros;
+        return numeros.slice(0, 4) + "-" + numeros.slice(4);
+    }
+
+    let activeActionId = null;
+    const floatingMenu = $("#actionsFloatingMenu");
+    const floatingViewBtn = $("#btnViewDetailsFloating");
+
+    function closeFloatingMenu() {
+        activeActionId = null;
+        floatingMenu.removeClass("open");
+    }
+
+    function openFloatingMenu(button, id) {
+        if (!floatingMenu.length) return;
+
+        const rect = button.get(0).getBoundingClientRect();
+        activeActionId = id;
+
+        floatingMenu.css({ display: "block", visibility: "hidden", left: "0px", top: "0px" });
+
+        const menuWidth = floatingMenu.outerWidth();
+        const menuHeight = floatingMenu.outerHeight();
+        const gap = 8;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let left = rect.right + gap;
+        if (left + menuWidth > viewportWidth - 12) left = rect.left - menuWidth - gap;
+        if (left < 12) left = 12;
+
+        let top = rect.top + (rect.height / 2) - (menuHeight / 2);
+        if (top < 12) top = 12;
+        if (top + menuHeight > viewportHeight - 12) top = viewportHeight - menuHeight - 12;
+
+        floatingMenu.css({ left: left + "px", top: top + "px", display: "", visibility: "" });
+        floatingMenu.addClass("open");
+    }
+
+    floatingViewBtn.on("click", function (e) {
+        e.preventDefault();
+        if (!activeActionId) return;
+
+        $.ajax({
+            url: '/inventario/generarDetalleUnidad',
+            type: 'POST',
+            data: { idUnidad: activeActionId }
+        })
+            .done(function (res) {
+                if (res.success) {
+                    $("#detalleSubtitulo").text("ID: " + res.unidad.idUnidad);
+                    $("#detalleIdUnidad").text(res.unidad.idUnidad);
+
+                    const bloodClass = getBloodBadgeClass(res.unidad.tipoSangre + res.unidad.factorRh);
+                    $("#detalleTipoSangre").html(
+                        `<span class="badge-soft ${bloodClass}">${res.unidad.tipoSangre}${res.unidad.factorRh}</span>`
+                    );
+
+                    $("#detalleCantidad").text(res.unidad.cantidad + " bolsa");
+
+                    const estadoClass = res.unidad.estadoUnidad === "Vencido" ? "badge-danger" : "badge-success";
+                    $("#detalleEstado").html(
+                        `<span class="badge-soft ${estadoClass}">${res.unidad.estado}</span>`
+                    );
+
+                    $("#detalleNombre").text(res.unidad.nombreDonante + " " + res.unidad.apellidoDonante);
+                    $("#detalleDui").text(res.unidad.dui);
+                    $("#detallePeso").text(res.unidad.peso);
+                    $("#detalleTelefono").text(res.unidad.telefono);
+                    $("#detalleFechaIngreso").text(res.unidad.fechaIngreso);
+                    $("#detalleFechaVencimiento").text(res.unidad.fechaCaducidad);
+
+                    $("#inventarioDetallesBackdrop").addClass("open");
+                    closeFloatingMenu();
+                } else {
+                    Swal.fire("Aviso", res.message || "No se encontró la información", "info");
+                }
+            })
+            .fail(function () {
+                Swal.fire("Error", "No se pudo conectar con el servidor", "error");
+            });
+    });
+
+    $(window).on("scroll resize", function () {
+        closeFloatingMenu();
+    });
+
+    $(document).on("input", "#duiInput", function () {
+        $(this).val(formatearDui($(this).val()));
+    });
+    $(document).on("input", "#telefonoInput", function () {
+        $(this).val(formatearTelefono($(this).val()));
+    });
 });
