@@ -17,7 +17,7 @@ Para ejecutar el proyecto en un entorno local, se recomienda contar con lo sigui
 
 El proyecto puede obtenerse de dos formas:
 
-###  Opción 1: Clonar el repositorio (recomendado)
+###  Opción 1: Clonar el repositorio y usar Rama "Master" (recomendado)
 
 Se debe abrir una terminal o consola de comandos y ejecutar:
 
