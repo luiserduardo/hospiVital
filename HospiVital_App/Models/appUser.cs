@@ -6,5 +6,8 @@
         public string Contrasena { get; set; } = string.Empty;
         public string Nombre { get; set; } = string.Empty;
         public string Rol { get; set; } = string.Empty;
+
+        // Marca interna para proteger el usuario administrador principal del sistema.
+        public bool EsAdministradorPrincipal { get; set; } = false;
     }
 }

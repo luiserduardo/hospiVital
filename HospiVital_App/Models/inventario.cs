@@ -1,9 +1,7 @@
-﻿using System.ComponentModel.Design;
-
 namespace HospiVital_App.Models
 {
-    //Clase que maneja la informacion
-    //unidad -> nodo-> cola->inventario
+    // Clase que maneja la informacion del inventario.
+    // La estructura interna sigue siendo colaPrioridadViales.
     public class inventario
     {
         private colaPrioridadViales cola;
@@ -15,68 +13,106 @@ namespace HospiVital_App.Models
             totalUnidades = 0;
         }
 
+        public int TotalUnidades => totalUnidades;
 
-        //metodos
-        public void agregarUnidad(unidadDeSangre unidad)
+        public bool estaVacio()
         {
-            //validar
-            if (unidad == null)
-                return;
-
-           //encolar
-           cola.encolar(unidad);
-            totalUnidades++;
-
+            return cola.estaVacia();
         }
 
-        public void editarUnidad(unidadDeSangre unidad) { 
+        public nodoUnidadSangre obtenerFrente()
+        {
+            return cola.obtenerFrente();
+        }
+
+        public bool agregarUnidad(unidadDeSangre unidad)
+        {
+            if (unidad == null || string.IsNullOrWhiteSpace(unidad.IdUnidad))
+                return false;
+
+            if (buscarUnidad(unidad.IdUnidad) != null)
+                return false;
+
+            cola.encolar(unidad);
+            totalUnidades++;
+            return true;
+        }
+
+        public void editarUnidad(unidadDeSangre unidad)
+        {
         }
 
         public void retirarUnidad(unidadDeSangre unidad)
         {
-            //aqui poner lo de id
+            if (unidad == null) return;
+            retirarUnidadPorId(unidad.IdUnidad);
+        }
+
+        public bool retirarUnidadPorId(string idUnidad)
+        {
+            if (string.IsNullOrWhiteSpace(idUnidad) || cola.estaVacia())
+                return false;
+
+            nodoUnidadSangre actual = cola.obtenerFrente();
+            nodoUnidadSangre anterior = null;
+
+            while (actual != null)
+            {
+                if (actual.Dato.IdUnidad.Equals(idUnidad.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    if (anterior == null)
+                    {
+                        cola.desencolar();
+                    }
+                    else
+                    {
+                        anterior.Sig = actual.Sig;
+                    }
+
+                    totalUnidades--;
+                    return true;
+                }
+
+                anterior = actual;
+                actual = actual.Sig;
+            }
+
+            return false;
         }
 
         public unidadDeSangre buscarUnidad(string id)
         {
-            //guardar el nodo q esta al frente
-            var actual = cola.obtenerFrente();
-
-            //Hasta llegar al final
-            while(actual != null) 
-                {
-                //del nodo comparar el id con el que estamos pasando y si es igual retornar
-            if(actual.Dato.IdUnidad == id)
-                    return actual.Dato;
-
-            //pasar al siguiente
-                actual = actual.Sig;
-
-            }
-            return null;
-        }
-
-        public List<unidadDeSangre> listaDisponibles() { 
-        
-            var lista = new List<unidadDeSangre>();
-
             var actual = cola.obtenerFrente();
 
             while (actual != null)
             {
-                lista.Add(actual.Dato);
+                if (!string.IsNullOrWhiteSpace(actual.Dato.IdUnidad) &&
+                    actual.Dato.IdUnidad.Equals(id.Trim(), StringComparison.OrdinalIgnoreCase))
+                    return actual.Dato;
+
                 actual = actual.Sig;
-                
             }
 
-            return lista;
-        
+            return null;
         }
 
+        public IEnumerable<unidadDeSangre> listaDisponibles()
+        {
+            return listaUnidades();
+        }
 
-        //public List listarProximaAVencer() { 
-        //}
+        // Devuelve todas las unidades registradas en la TAD colaPrioridadViales.
+        // Incluye Disponibles, Vencidas y Asignadas para que el inventario funcione
+        // como una base de datos interna compartida entre roles.
+        public IEnumerable<unidadDeSangre> listaUnidades()
+        {
+            var actual = cola.obtenerFrente();
 
-
+            while (actual != null)
+            {
+                yield return actual.Dato;
+                actual = actual.Sig;
+            }
+        }
     }
 }

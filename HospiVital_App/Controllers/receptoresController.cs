@@ -1,56 +1,183 @@
-﻿using HospiVital_App.Models;
+using HospiVital_App.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace HospiVital_App.Controllers
 {
     [Authorize(Roles = AppRoles.Medico)]
     public class receptoresController : Controller
     {
-        private static colaPrioridadViales inventarioViales = new colaPrioridadViales();
-        private static listaEnlazadaPacientes registroPacientes = new listaEnlazadaPacientes();
-        private static listaEnlazadaDonantes registroDonantes = new listaEnlazadaDonantes();
-        private static List<dynamic> asignacionesRealizadas = new List<dynamic>();
+        private readonly baseDatosInterna baseDatos = baseDatosInterna.Instancia;
 
-        private readonly servicioCompatibilidad compatibilidad = new servicioCompatibilidad();
-
-        public IActionResult obtenerListado()
+        public IActionResult obtenerListado(
+            string? busqueda,
+            string? estado,
+            string? tipoSangre,
+            string? factorRh,
+            string? fecha)
         {
-            if (asignacionesRealizadas.Count == 0)
-            {
-                CargarDatosPrueba();
-            }
+            string estadoFiltro = string.IsNullOrWhiteSpace(estado) ? "all" : estado.Trim();
+            string tipoFiltro = string.IsNullOrWhiteSpace(tipoSangre) ? "all" : tipoSangre.Trim().ToUpper();
+            string rhFiltro = string.IsNullOrWhiteSpace(factorRh) ? "all" : factorRh.Trim();
+            string fechaFiltro = string.IsNullOrWhiteSpace(fecha) ? "all" : fecha.Trim();
+            string busquedaFiltro = busqueda?.Trim() ?? string.Empty;
 
-            ViewBag.TotalPacientes = registroPacientes.Total;
-            ViewBag.Completados = asignacionesRealizadas.Count;
-            ViewBag.Compatibles = ObtenerCompatiblesPorTipo("O", "+");
-            ViewBag.TipoFiltrado = "O+";
+            listaEnlazadaReceptorAsignacion listadoFiltrado = baseDatos.AsignacionesRealizadas.filtrar(
+                busquedaFiltro,
+                estadoFiltro,
+                tipoFiltro,
+                rhFiltro,
+                fechaFiltro);
 
-            return View(asignacionesRealizadas);
+            ViewBag.TotalPacientes = baseDatos.RegistroPacientes.Total;
+            ViewBag.Completados = baseDatos.AsignacionesRealizadas.contarPorEstado("Completado");
+            ViewBag.Compatibles = new listaEnlazadaUnidadesCompatibles();
+            ViewBag.TipoFiltrado = "Seleccione tipo y Rh";
+            ViewBag.FiltroBusqueda = busquedaFiltro;
+            ViewBag.FiltroEstado = estadoFiltro;
+            ViewBag.FiltroTipoSangre = tipoFiltro;
+            ViewBag.FiltroFactorRh = rhFiltro;
+            ViewBag.FiltroFecha = fechaFiltro;
+            ViewBag.TotalFiltrados = listadoFiltrado.Total;
+
+            return View(listadoFiltrado);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(paciente nuevoPaciente)
+        public IActionResult Create(
+            string dui,
+            string nombre,
+            string apellido,
+            string tipoSangreRequerido,
+            string factorRhRequerido,
+            string? idUnidadSeleccionada)
         {
-            try
-            {
-                registroPacientes.insertarFinal(nuevoPaciente);
-                procesarPacienteReciente(nuevoPaciente);
+            string duiNormalizado = (dui ?? string.Empty).Trim();
+            string nombreNormalizado = NormalizarTexto(nombre);
+            string apellidoNormalizado = NormalizarTexto(apellido);
+            string tipo = (tipoSangreRequerido ?? string.Empty).Trim().ToUpper();
+            string factor = (factorRhRequerido ?? string.Empty).Trim();
 
-                return RedirectToAction(nameof(obtenerListado));
-            }
-            catch
+            string? mensajeValidacion = ValidarDatosReceptor(
+                duiNormalizado,
+                nombreNormalizado,
+                apellidoNormalizado,
+                tipo,
+                factor);
+
+            if (mensajeValidacion != null)
             {
+                TempData["ReceptoresTipoMensaje"] = "error";
+                TempData["ReceptoresMensaje"] = mensajeValidacion;
                 return RedirectToAction(nameof(obtenerListado));
             }
+
+            if (baseDatos.RegistroPacientes.buscarPorDui(duiNormalizado) != null)
+            {
+                TempData["ReceptoresTipoMensaje"] = "error";
+                TempData["ReceptoresMensaje"] = "Ya existe un receptor registrado con ese DUI.";
+                return RedirectToAction(nameof(obtenerListado));
+            }
+
+            string? mensajeUnidad = baseDatos.ValidarUnidadSeleccionadaParaReceptor(
+                idUnidadSeleccionada,
+                tipo,
+                factor);
+
+            if (mensajeUnidad != null)
+            {
+                TempData["ReceptoresTipoMensaje"] = "warning";
+                TempData["ReceptoresMensaje"] = mensajeUnidad;
+                return RedirectToAction(nameof(obtenerListado));
+            }
+
+            paciente nuevoPaciente = new paciente(
+                duiNormalizado,
+                nombreNormalizado,
+                apellidoNormalizado,
+                tipo,
+                factor);
+
+            receptorAsignacion asignacion = baseDatos.RegistrarPacienteYAsignar(nuevoPaciente, idUnidadSeleccionada);
+
+            TempData["ReceptoresTipoMensaje"] = asignacion.Estado == "Completado" ? "success" : "error";
+            TempData["ReceptoresMensaje"] = asignacion.Estado == "Completado"
+                ? "Receptor registrado y vial seleccionado asignado correctamente."
+                : "No se pudo asignar el vial seleccionado. Verifique que siga disponible y no esté vencido.";
+
+            return RedirectToAction(nameof(obtenerListado));
+        }
+
+        private string? ValidarDatosReceptor(
+            string dui,
+            string nombre,
+            string apellido,
+            string tipoSangre,
+            string factorRh)
+        {
+            if (string.IsNullOrWhiteSpace(dui) ||
+                string.IsNullOrWhiteSpace(nombre) ||
+                string.IsNullOrWhiteSpace(apellido) ||
+                string.IsNullOrWhiteSpace(tipoSangre) ||
+                string.IsNullOrWhiteSpace(factorRh))
+            {
+                return "Debe completar DUI, nombre, apellido, tipo de sangre y factor Rh.";
+            }
+
+            if (!Regex.IsMatch(dui, @"^\d{8}-\d{1}$") || dui == "00000000-0")
+            {
+                return "El DUI debe tener el formato 00000000-0 y no puede ser un valor vacío.";
+            }
+
+            if (!TextoPersonaValido(nombre) || nombre.Length < 2 || nombre.Length > 60)
+            {
+                return "El nombre solo debe contener letras y espacios, con una longitud de 2 a 60 caracteres.";
+            }
+
+            if (!TextoPersonaValido(apellido) || apellido.Length < 2 || apellido.Length > 60)
+            {
+                return "El apellido solo debe contener letras y espacios, con una longitud de 2 a 60 caracteres.";
+            }
+
+            if (!TipoSangreValido(tipoSangre))
+            {
+                return "Seleccione un tipo de sangre válido: A, B, AB u O.";
+            }
+
+            if (!FactorRhValido(factorRh))
+            {
+                return "Seleccione un factor Rh válido: + o -.";
+            }
+
+            return null;
+        }
+
+        private static string NormalizarTexto(string? valor)
+        {
+            return Regex.Replace(valor ?? string.Empty, @"\s+", " ").Trim();
+        }
+
+        private static bool TextoPersonaValido(string valor)
+        {
+            return Regex.IsMatch(valor, @"^[A-Za-zÁÉÍÓÚáéíóúÑñÜü]+(?: [A-Za-zÁÉÍÓÚáéíóúÑñÜü]+)*$");
+        }
+
+        private static bool TipoSangreValido(string tipoSangre)
+        {
+            return tipoSangre == "A" || tipoSangre == "B" || tipoSangre == "AB" || tipoSangre == "O";
+        }
+
+        private static bool FactorRhValido(string factorRh)
+        {
+            return factorRh == "+" || factorRh == "-";
         }
 
         [HttpPost]
         public IActionResult generarDetalleReceptor(string idReceptor)
         {
-            var detalle = asignacionesRealizadas.FirstOrDefault(x => x.IdReceptor == idReceptor);
+            receptorAsignacion? detalle = baseDatos.AsignacionesRealizadas.buscarPorId(idReceptor);
 
             if (detalle == null)
             {
@@ -71,140 +198,15 @@ namespace HospiVital_App.Controllers
         [HttpGet]
         public IActionResult ObtenerCompatibles(string tipoSangre, string factorRh)
         {
-            var compatibles = ObtenerCompatiblesPorTipo(tipoSangre, factorRh);
+            listaEnlazadaUnidadesCompatibles compatibles = baseDatos.ObtenerCompatiblesPorTipo(tipoSangre, factorRh);
 
             return Json(new
             {
                 success = true,
                 filtro = $"{tipoSangre}{factorRh}",
-                data = compatibles
+                total = compatibles.Total,
+                cabeza = compatibles.Cabeza
             });
-        }
-
-        private void CargarDatosPrueba()
-        {
-            if (asignacionesRealizadas.Count > 0) return;
-
-            Donante d1 = new Donante(1, "Juan", "Pérez", "02345678-9", "7712-3456");
-            Donante d2 = new Donante(2, "María", "García", "05123456-1", "7100-9988");
-            Donante d3 = new Donante(3, "Carlos", "Hernández", "01010101-0", "2222-3333");
-
-            registroDonantes.insertarFinal(d1);
-            registroDonantes.insertarFinal(d2);
-            registroDonantes.insertarFinal(d3);
-
-            unidadDeSangre v1 = new unidadDeSangre(
-                "B-1024-A", "A", "+",
-                DateTime.Now.AddDays(-5),
-                DateTime.Now.AddDays(10),
-                "Disponible",
-                450,
-                d1
-            );
-
-            unidadDeSangre v2 = new unidadDeSangre(
-                "B-1025-O", "O", "+",
-                DateTime.Now.AddDays(-2),
-                DateTime.Now.AddDays(30),
-                "Disponible",
-                500,
-                d2
-            );
-
-            unidadDeSangre v3 = new unidadDeSangre(
-                "B-1026-B", "B", "-",
-                DateTime.Now.AddDays(-1),
-                DateTime.Now.AddDays(5),
-                "Disponible",
-                450,
-                d3
-            );
-
-            inventarioViales.encolar(v1);
-            inventarioViales.encolar(v2);
-            inventarioViales.encolar(v3);
-
-            paciente p1 = new paciente("José", "López", "A", "+");
-            paciente p2 = new paciente("Elena", "Rivas", "B", "-");
-            paciente p3 = new paciente("Roberto", "Sosa", "O", "+");
-
-            registroPacientes.insertarFinal(p1);
-            registroPacientes.insertarFinal(p2);
-            registroPacientes.insertarFinal(p3);
-
-            procesarPacienteReciente(p1);
-            procesarPacienteReciente(p2);
-            procesarPacienteReciente(p3);
-        }
-
-        private void procesarPacienteReciente(paciente p)
-        {
-            if (inventarioViales.estaVacia()) return;
-
-            nodoUnidadSangre actualVial = inventarioViales.obtenerFrente();
-            nodoUnidadSangre anteriorVial = null;
-
-            while (actualVial != null)
-            {
-                if (compatibilidad.esCompatible(actualVial.Dato, p) && !actualVial.Dato.estaVencida())
-                {
-                    unidadDeSangre unidadAsignada = actualVial.Dato;
-
-                    if (anteriorVial == null)
-                        inventarioViales.desencolar();
-                    else
-                        anteriorVial.Sig = actualVial.Sig;
-
-                    asignacionesRealizadas.Add(new
-                    {
-                        IdReceptor = "REC-" + p.IdPaciente,
-                        Beneficiario = p.Nombre + " " + p.Apellido,
-                        Nombres = p.Nombre,
-                        Apellidos = p.Apellido,
-                        TipoSangre = p.TipoSangreRequerido + p.FactorRhRequerido,
-                        Donante = unidadAsignada.Donante.Nombre + " " + unidadAsignada.Donante.Apellido,
-                        DonanteDui = unidadAsignada.Donante.Dui,
-                        DonanteTelefono = unidadAsignada.Donante.Telefono,
-                        UnidadAsignada = unidadAsignada.IdUnidad,
-                        FechaTransfusion = DateTime.Now
-                            .ToString("dd MMM yyyy, HH:mm", new CultureInfo("es-ES"))
-                            .Replace(".", "")
-                    });
-
-                    return;
-                }
-
-                anteriorVial = actualVial;
-                actualVial = actualVial.Sig;
-            }
-        }
-
-        private List<dynamic> ObtenerCompatiblesPorTipo(string tipoSangre, string factorRh)
-        {
-            var resultado = new List<dynamic>();
-            nodoUnidadSangre actual = inventarioViales.obtenerFrente();
-
-            while (actual != null)
-            {
-                var unidad = actual.Dato;
-
-                if (!unidad.estaVencida()
-                    && unidad.EstadoUnidad == "Disponible"
-                    && unidad.TipoSangre == tipoSangre
-                    && unidad.FactorRh == factorRh)
-                {
-                    resultado.Add(new
-                    {
-                        IdVial = unidad.IdUnidad,
-                        Tipo = unidad.TipoSangre + unidad.FactorRh,
-                        Ubicacion = "Nevera A1-Estante 1"
-                    });
-                }
-
-                actual = actual.Sig;
-            }
-
-            return resultado;
         }
     }
 }
