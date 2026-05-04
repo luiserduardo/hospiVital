@@ -1,0 +1,35 @@
+@{
+    ViewData["Title"] = "Viales Vencidos";
+}
+
+@model IEnumerable<HospiVital_App.Models.unidadDeSangre>
+
+<h2>Viales Vencidos</h2>
+
+<table border="1">
+    <thead>
+        <tr>
+            <th>ID Unidad</th>
+            <th>Tipo Sangre</th>
+            <th>Factor Rh</th>
+            <th>Fecha Ingreso</th>
+            <th>Fecha Caducidad</th>
+            <th>Donante</th>
+            <th>DUI Donante</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var vial in Model)
+        {
+            <tr>
+                <td>@vial.IdUnidad</td>
+                <td>@vial.TipoSangre</td>
+                <td>@vial.FactorRh</td>
+                <td>@vial.FechaIngreso.ToString("dd/MM/yyyy")</td>
+                <td>@vial.FechaCaducidad.ToString("dd/MM/yyyy")</td>
+                <td>@(vial.Donante?.Nombre + " " + vial.Donante?.Apellido)</td>
+                <td>@(vial.Donante?.Dui ?? "N/A")</td>
+            </tr>
+        }
+    </tbody>
+</table>

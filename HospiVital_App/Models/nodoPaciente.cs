@@ -1,9 +1,9 @@
-﻿namespace HospiVital_App.Models
+namespace HospiVital_App.Models
 {
     public class nodoPaciente
     {
         private paciente dato;
-        private nodoPaciente siguiente;
+        private nodoPaciente? siguiente;
 
         //Constructor vacío
         public nodoPaciente()
@@ -26,7 +26,7 @@
             set => dato = value;
         }
 
-        public nodoPaciente Siguiente
+        public nodoPaciente? Siguiente
         {
             get => siguiente;
             set => siguiente = value;

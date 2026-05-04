@@ -1,4 +1,4 @@
-﻿@* El modelo en el que esta basado *@
+@* El modelo en el que esta basado *@
 @model IEnumerable<HospiVital_App.Models.unidadDeSangre>
 @{
     ViewData["Title"] = "Listado de unidades";
@@ -92,6 +92,7 @@
                                 <option value="all">Todos</option>
                                 <option value="Disponible">Disponible</option>
                                 <option value="Vencido">Vencido</option>
+                                <option value="Asignada">Asignada</option>
                             </select>
                         </div>
 
@@ -163,6 +164,9 @@
                     @foreach (var item in Model)
                     {
                         var esVencido = item.EstadoUnidad == "Vencido";
+                        var esAsignada = item.EstadoUnidad == "Asignada";
+                        var estadoClase = esVencido ? "badge-danger" : (esAsignada ? "badge-warning" : "badge-success");
+                        var estadoTexto = esVencido ? "Vencido" : (esAsignada ? "Asignada" : "Disponible");
 
                         <tr class="@(esVencido ? "row-expired" : "")">
                             <td class="unit-code">
@@ -181,8 +185,8 @@
                                 @item.FechaCaducidad.ToString("dd/MM/yyyy")
                             </td>
                             <td>
-                                <span class="badge-soft @(item.EstadoUnidad == "Vencido" ? "badge-danger" : "badge-success")">
-                                    @(item.EstadoUnidad == "Vencido" ? "Vencido" : "Disponible")
+                                <span class="badge-soft @estadoClase">
+                                    @estadoTexto
                                 </span>
                             </td>
                             <td>
@@ -223,5 +227,21 @@
 @* Esto cambiar, cuidado si mueven esto, se puede romper *@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    @if (TempData["InventarioMensaje"] != null)
+    {
+        var tipoMensaje = (TempData["InventarioTipoMensaje"]?.ToString() ?? "info").ToLower();
+        var mensaje = TempData["InventarioMensaje"]?.ToString() ?? string.Empty;
+
+        <script>
+            Swal.fire({
+                icon: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(tipoMensaje)),
+                title: 'Inventario',
+                text: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(mensaje)),
+                confirmButtonColor: '#e91e63'
+            });
+        </script>
+    }
+
     <script src="~/js/inventario.js" asp-append-version="true"></script>
 }

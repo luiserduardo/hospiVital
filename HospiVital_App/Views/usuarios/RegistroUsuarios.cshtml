@@ -1,33 +1,334 @@
-﻿@model List<HospiVital_App.Models.AppUser>
+@model HospiVital_App.Models.listaEnlazadaUsuarios
+@using HospiVital_App.Models
 
 @{
-    ViewData["Title"] = "Registro de Usuarios";
+    ViewData["Title"] = "CRUD de Usuarios";
+    var roles = new[] { AppRoles.AsistenteMedico, AppRoles.Medico, AppRoles.Admin };
+    var mensajeTipo = (TempData["UsuariosTipoMensaje"]?.ToString() ?? "info").ToLower();
+    var mensajeClase = mensajeTipo == "success" ? "users-message success" : "users-message error";
+}
+
+@section Styles {
+    <style>
+        .users-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .users-header h2 {
+            margin: 0;
+        }
+
+        .users-message {
+            margin-bottom: 16px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-weight: 800;
+        }
+
+        .users-message.success {
+            background: #ecfdf5;
+            color: #047857;
+            border: 1px solid #bbf7d0;
+        }
+
+        .users-message.error {
+            background: #eef6ff;
+            color: #1e3a8a;
+            border: 1px solid #dbeafe;
+        }
+
+        .users-form-card {
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 16px;
+            background: #f8fafc;
+            margin-bottom: 20px;
+        }
+
+        .users-form-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 12px;
+            align-items: end;
+        }
+
+        .users-field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .users-field label {
+            font-size: .75rem;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .users-input, .users-select {
+            width: 100%;
+            height: 42px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #fff;
+            padding: 0 12px;
+            outline: none;
+        }
+
+        .users-input:focus, .users-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(230, 28, 93, .12);
+        }
+
+        .users-input.is-invalid, .users-select.is-invalid {
+            border-color: #ef4444;
+            background: #fff7f7;
+        }
+
+        .password-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-wrap .users-input {
+            padding-right: 44px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 8px;
+            width: 30px;
+            height: 30px;
+            border: 0;
+            border-radius: 10px;
+            background: #f8fafc;
+            color: #64748b;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background .18s ease, color .18s ease, transform .18s ease;
+        }
+
+        .password-toggle:hover,
+        .password-toggle.active {
+            background: #ffe4ec;
+            color: var(--primary);
+        }
+
+        .password-toggle svg {
+            width: 18px;
+            height: 18px;
+            display: block;
+        }
+
+
+        .users-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .users-table td {
+            vertical-align: middle;
+        }
+
+        .users-table .users-input,
+        .users-table .users-select {
+            min-width: 140px;
+        }
+
+        .btn-danger-soft {
+            border: 1px solid #fecaca;
+            color: #b91c1c;
+            background: #fff1f2;
+            border-radius: 12px;
+            height: 40px;
+            padding: 0 14px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .btn-danger-soft:hover {
+            background: #ffe4e6;
+        }
+
+        .btn-danger-soft:disabled {
+            opacity: .55;
+            cursor: not-allowed;
+        }
+
+        .users-empty {
+            text-align: center;
+            color: #64748b;
+            font-weight: 700;
+            padding: 22px;
+        }
+
+        @@media (max-width: 980px) {
+            .users-form-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+    </style>
 }
 
 <div class="content-card">
     <div class="content-card-body">
-        <h2 style="margin-bottom: 18px;">Usuarios del sistema</h2>
+        <div class="users-header">
+            <h2>CRUD de usuarios del sistema</h2>
+            <span class="badge-soft badge-primary">Administrador</span>
+        </div>
+
+        @if (TempData["UsuariosMensaje"] != null)
+        {
+            <div class="@mensajeClase">@TempData["UsuariosMensaje"]</div>
+        }
+
+        <div class="users-form-card">
+            <h3 style="margin: 0 0 14px; font-size: 1rem;">Crear nuevo usuario</h3>
+
+            <form asp-action="Crear" method="post" id="crearUsuarioForm" novalidate>
+                @Html.AntiForgeryToken()
+                <div class="users-form-grid">
+                    <div class="users-field">
+                        <label>Usuario</label>
+                        <input class="users-input" name="nuevoUsuario" autocomplete="off" />
+                    </div>
+
+                    <div class="users-field">
+                        <label>Contraseña</label>
+                        <div class="password-wrap">
+                            <input class="users-input password-input" type="password" name="nuevaContrasena" autocomplete="new-password" />
+                            <button type="button" class="password-toggle" aria-label="Mostrar contraseña mientras se presiona">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+                                    <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="users-field">
+                        <label>Nombre</label>
+                        <input class="users-input" name="nuevoNombre" autocomplete="off" />
+                    </div>
+
+                    <div class="users-field">
+                        <label>Rol</label>
+                        <select class="users-select" name="nuevoRol">
+                            @foreach (var rol in roles)
+                            {
+                                <option value="@rol">@rol</option>
+                            }
+                        </select>
+                    </div>
+
+                    <button type="submit" class="add-btn">⊕ CREAR</button>
+                </div>
+            </form>
+        </div>
 
         <div class="table-wrap">
-            <table class="table-modern">
+            <table class="table-modern users-table">
                 <thead>
                     <tr>
                         <th>USUARIO</th>
+                        <th>CONTRASEÑA</th>
                         <th>NOMBRE</th>
                         <th>ROL</th>
+                        <th>ACCIONES</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var item in Model)
+                    @{
+                        var actual = Model.Cabeza;
+                        int indice = 0;
+                    }
+
+                    @if (actual == null)
                     {
                         <tr>
-                            <td>@item.Usuario</td>
-                            <td>@item.Nombre</td>
-                            <td>@item.Rol</td>
+                            <td colspan="5" class="users-empty">No hay usuarios registrados.</td>
                         </tr>
+                    }
+
+                    @while (actual != null)
+                    {
+                        var item = actual.Dato;
+                        var editFormId = $"edit_usuario_{indice}";
+                        var deleteFormId = $"delete_usuario_{indice}";
+
+                        <tr>
+                            <td>
+                                <input class="users-input" form="@editFormId" name="usuarioEditado" value="@item.Usuario" autocomplete="off" />
+                            </td>
+                            <td>
+                                <div class="password-wrap">
+                                    <input class="users-input password-input" type="password" form="@editFormId" name="contrasenaEditada" value="@item.Contrasena" autocomplete="new-password" />
+                                    <button type="button" class="password-toggle" aria-label="Mostrar contraseña mientras se presiona">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+                                            <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                            <td>
+                                <input class="users-input" form="@editFormId" name="nombreEditado" value="@item.Nombre" autocomplete="off" />
+                            </td>
+                            <td>
+                                <select class="users-select" form="@editFormId" name="rolEditado">
+                                    @foreach (var rol in roles)
+                                    {
+                                        if (item.Rol == rol)
+                                        {
+                                            <option value="@rol" selected>@rol</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@rol">@rol</option>
+                                        }
+                                    }
+                                </select>
+                            </td>
+                            <td class="users-actions">
+                                <form id="@editFormId" asp-action="Editar" method="post" class="editar-usuario-form" novalidate>
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="usuarioOriginal" value="@item.Usuario" />
+                                </form>
+
+                                <form id="@deleteFormId" asp-action="Eliminar" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="usuario" value="@item.Usuario" />
+                                </form>
+
+                                <button type="submit" form="@editFormId" class="add-btn">Guardar</button>
+                                <button type="button"
+                                        class="btn-danger-soft usuario-delete-btn"
+                                        data-form="@deleteFormId"
+                                        data-usuario="@item.Usuario"
+                                        data-principal="@(item.EsAdministradorPrincipal ? "true" : "false")">
+                                    Eliminar
+                                </button>
+                            </td>
+                        </tr>
+
+                        actual = actual.Siguiente;
+                        indice++;
                     }
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/js/usuarios.js" asp-append-version="true"></script>
+}

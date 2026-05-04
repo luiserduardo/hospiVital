@@ -38,11 +38,11 @@ namespace HospiVital_App.Controllers
 
             if (usuario == null)
             {
-                ModelState.AddModelError(string.Empty, "Usuario o contraseña incorrectos.");
+                ModelState.AddModelError(string.Empty, "Usuario o contraseÃ±a incorrectos.");
                 return View(model);
             }
 
-            var claims = new List<Claim>
+            Claim[] claims =
             {
                 new Claim(ClaimTypes.Name, usuario.Nombre),
                 new Claim(ClaimTypes.Role, usuario.Rol),

@@ -1,12 +1,13 @@
-﻿namespace HospiVital_App.Models
+namespace HospiVital_App.Models
 {
     public class paciente
     {
         private int idPaciente;
-        private string nombre;
-        private string apellido;
-        private string tipoSangreRequerido;
-        private string factorRhRequerido;
+        private string dui = string.Empty;
+        private string nombre = string.Empty;
+        private string apellido = string.Empty;
+        private string tipoSangreRequerido = string.Empty;
+        private string factorRhRequerido = string.Empty;
         //Para genera el id
         private static int ultimoId = 1000;
 
@@ -25,7 +26,13 @@
             this.Apellido = apellido;
             this.TipoSangreRequerido = tipoSangreRequerido;
             this.FactorRhRequerido = factorRhRequerido;
+        }
 
+        public paciente(string dui, string nombre, string apellido,
+                        string tipoSangreRequerido, string factorRhRequerido)
+            : this(nombre, apellido, tipoSangreRequerido, factorRhRequerido)
+        {
+            this.Dui = dui;
         }
 
         //Genera un id único automaticamente 
@@ -42,29 +49,34 @@
             set => idPaciente = value;
         }
 
+        public string Dui
+        {
+            get => dui;
+            set => dui = value ?? string.Empty;
+        }
+
         public string Nombre
         {
             get => nombre;
-            set => nombre = value;
+            set => nombre = value ?? string.Empty;
         }
 
         public string Apellido
         {
             get => apellido;
-            set => apellido = value;
+            set => apellido = value ?? string.Empty;
         }
 
         public string TipoSangreRequerido
         {
             get => tipoSangreRequerido;
-            set => tipoSangreRequerido = value;
+            set => tipoSangreRequerido = value ?? string.Empty;
         }
 
         public string FactorRhRequerido
         {
             get => factorRhRequerido;
-            set => factorRhRequerido = value;
+            set => factorRhRequerido = value ?? string.Empty;
         }
-
     }
 }
