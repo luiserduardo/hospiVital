@@ -14,6 +14,7 @@
     <div class="stat-card">
         <div class="stat-info">
             <small>Total Unidades</small>
+            <h3 id="statTotal">—</h3>
         </div>
         <div class="stat-icon primary">🩸</div>
     </div>
@@ -21,7 +22,7 @@
     <div class="stat-card">
         <div class="stat-info">
             <small>Activas</small>
-            @* <h3>@Model.Count(x => x.EstadoUnidad == "Activo")</h3> *@
+            <h3 id="statActivas">—</h3>
         </div>
         <div class="stat-icon success">✔</div>
     </div>
@@ -29,7 +30,7 @@
     <div class="stat-card">
         <div class="stat-info">
             <small>Vencidas</small>
-            @* <h3>@Model.Count(x => x.EstadoUnidad == "Vencido")</h3> *@
+            <h3 id="statVencidas">—</h3>
         </div>
         <div class="stat-icon warning">⌛</div>
     </div>
@@ -37,7 +38,7 @@
     <div class="stat-card">
         <div class="stat-info">
             <small>Hoy</small>
-            @* <h3>@Model.Count(x => x.FechaIngreso.Date == DateTime.Today)</h3> *@
+            <h3 id="statHoy">—</h3>
         </div>
         <div class="stat-icon primary">📅</div>
     </div>
@@ -65,8 +66,9 @@
             <div class="toolbar-left">
                 <div class="search-box">
                     <span class="search-icon">🔍</span>
-                    <input id="inventarioSearch" type="text" placeholder="ID o nombre del donante" />
+                    <input id="inventarioSearch" type="text" placeholder="ID del vial de sangre" />
                 </div>
+
             </div>
 
             <div class="toolbar-right inventario-toolbar-right">
@@ -117,10 +119,21 @@
                     </div>
                 </div>
 
-                @* AQUI LO QUE HACE ES USAR BOOSTRAP PARA PODER DESPLEGAR EL FORM, SI QUIERE CAMBIER ESTO YANI, BUSQUE LA VISTA LLAMADA FORMULARIOaGREGARUNIDAD, EN ESTA CARPETA *@
                 <button id="btnAbrirDonacion" type="button" class="add-btn">
                     ⊕ AGREGAR DONACIÓN
                 </button>
+
+                <form id="formDepurar"
+                      asp-controller="inventario"
+                      asp-action="depurarVencidos"
+                      method="post"
+                      style="display:inline">
+                    @Html.AntiForgeryToken()
+                    <button id="btnDepurar" type="button" class="add-btn">
+                        🗑 Depurar
+                    </button>
+                </form>
+
             </div>
         </div>
 
@@ -208,16 +221,28 @@
                 
             </table>
         </div>
-        
+ 
+ <div class="table-footer">
+    <span id="inventarioCount">
+        Página @ViewBag.PaginaActual de @ViewBag.TotalPaginas
+        · @ViewBag.TotalUnidades unidades
+    </span>
 
-        <div class="table-footer">
-            <span id="inventarioCount">Mostrando 0 de 0</span>
+    <div class="pagination-custom"
+         data-pagina-actual="@ViewBag.PaginaActual"
+         data-total-paginas="@ViewBag.TotalPaginas">
 
-            <div class="pagination-custom">
-                <button id="btnPrevPage" type="button" class="page-btn">Anterior</button>
-                <button id="btnNextPage" type="button" class="page-btn">Siguiente</button>
-            </div>
-        </div>
+        <button id="btnPrevPage" type="button" class="page-btn"
+                @(ViewBag.PaginaActual <= 1 ? "disabled" : "")>
+            Anterior
+        </button>
+
+        <button id="btnNextPage" type="button" class="page-btn"
+                @(ViewBag.PaginaActual >= ViewBag.TotalPaginas ? "disabled" : "")>
+            Siguiente
+        </button>
+    </div>
+</div>
 
     </div>
 </div>

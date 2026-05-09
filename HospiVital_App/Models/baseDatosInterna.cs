@@ -375,6 +375,25 @@ namespace HospiVital_App.Models
             });
         }
 
+        //metodo relacionado con la depuracion de los viales de sangre
+        public int DepurarVialesVencidos()
+        {
+            //aplicar lo de depuracion
+            IEnumerable<unidadDeSangre> vencidos = Inventario.depurarVencidos();
+            int contador = 0;
+
+            foreach(unidadDeSangre vial in vencidos)
+            {
+                AgregarVialVencido(vial);
+                contador++;
+            }
+        
+            return contador;
+        
+        }
+
+
+
         private void CargarDatosIniciales()
         {
             Donante d1 = RegistrarDonante(new Donante(1, "Ana", "Martínez", "05123456-7", "7123-4567") { Peso = 58 });
@@ -491,5 +510,9 @@ namespace HospiVital_App.Models
                 "HP20260003"
             );
         }
+  
+    
+    
+    
     }
 }

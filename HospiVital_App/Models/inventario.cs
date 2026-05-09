@@ -101,6 +101,33 @@ namespace HospiVital_App.Models
             return listaUnidades();
         }
 
+
+        public IEnumerable<unidadDeSangre> obtenerPagina(int pagina, int elementosPorPagina)
+        {
+            int inicio = (pagina - 1) * elementosPorPagina;
+            int fin = inicio + elementosPorPagina;
+
+            int indice = 0;
+
+            nodoUnidadSangre actual = cola.obtenerFrente();
+
+            while (actual != null)
+            {
+                if (indice >= inicio && indice < fin)
+                {
+                    yield return actual.Dato;
+                }
+
+                indice++;
+
+                if (indice >= fin)
+                    yield break;
+
+                actual = actual.Sig;
+            }
+        }
+
+
         // Devuelve todas las unidades registradas en la TAD colaPrioridadViales.
         // Incluye Disponibles, Vencidas y Asignadas para que el inventario funcione
         // como una base de datos interna compartida entre roles.
@@ -114,5 +141,41 @@ namespace HospiVital_App.Models
                 actual = actual.Sig;
             }
         }
+
+        //Metodo para depuracion de los vencidos, para pasar los viales de la cola a la tad que gestiona los viales vencidos
+        public IEnumerable<unidadDeSangre> depurarVencidos()
+        {
+
+            List<string> idsADepurar = new List<string>();
+            nodoUnidadSangre actual = cola.obtenerFrente();
+
+            //recorrer
+            while(actual != null)
+            {
+                if (actual.Dato.estaVencida() || actual.Dato.EstadoUnidad == "Vencido")
+                    idsADepurar.Add(actual.Dato.IdUnidad);
+                actual = actual.Sig;
+            }
+
+
+            //retirar cada vial
+            List<unidadDeSangre> depurados = new List<unidadDeSangre>();
+
+            //haciendo uso de cada id
+            foreach(string id in idsADepurar)
+            {
+                unidadDeSangre? unidad = buscarUnidad(id);
+
+                if (unidad != null && retirarUnidadPorId(id)) 
+                    depurados.Add(unidad)
+                    ;
+            
+            }
+
+            return depurados;
+
+        }
+
+
     }
 }
