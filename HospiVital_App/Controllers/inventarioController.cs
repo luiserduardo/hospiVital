@@ -53,11 +53,40 @@ namespace HospiVital_App.Controllers
         }
 
         [HttpGet]
-        public ActionResult obtenerListado()
+        public ActionResult obtenerListado(int pagina = 1)
         {
-            IEnumerable<unidadDeSangre> lista = baseDatos.Inventario.listaUnidades();
-            return View(lista);
+            int elementosPorPagina = 5;
+            int totalUnidades = baseDatos.Inventario.TotalUnidades;
+            int totalPaginas = (int)Math.Ceiling((double)totalUnidades / elementosPorPagina);
+            pagina = Math.Max(1, Math.Min(pagina, Math.Max(1, totalPaginas)));
+
+            var datosPagina = baseDatos.Inventario.obtenerPagina(pagina, elementosPorPagina);
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new
+                {
+                    paginas = new { actual = pagina, total = totalPaginas, totalUnidades },
+                    filas = datosPagina.Select(u => new
+                    {
+                        idUnidad = u.IdUnidad,
+                        tipoSangre = u.TipoSangre,
+                        factorRh = u.FactorRh,
+                        fechaIngreso = u.FechaIngreso.ToString("dd/MM/yyyy"),
+                        fechaCaducidad = u.FechaCaducidad.ToString("dd/MM/yyyy"),
+                        estadoUnidad = u.EstadoUnidad
+                    })
+                });
+            }
+
+            ViewBag.PaginaActual = pagina;
+            ViewBag.TotalPaginas = totalPaginas;
+            ViewBag.TotalUnidades = totalUnidades;
+            return View(datosPagina);
         }
+
+
+
 
         [HttpGet]
         public ActionResult generarCodigo()
@@ -198,6 +227,44 @@ namespace HospiVital_App.Controllers
             }
 
             return 0;
+        
+    }
+
+    //Funcion para depurar los viales de sangre
+    [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult depurarVencidos()
+        {
+            int cantidad = baseDatos.DepurarVialesVencidos();
+
+            //TempData sirve para guardar el dato, se va a utilizar en otra parte
+            TempData["InventarioTipoMensaje"] = cantidad > 0 ? cantidad : 0;
+            TempData["InventarioMensaje"] = cantidad > 0
+                    ? $"Se depuraron {cantidad} vial(es) vencido(s) del inventario correctamente."
+                    : "No se encontraron viales vencidos para depurar.";
+
+
+            return RedirectToAction("obtenerListado");
         }
+
+
+        [HttpGet]
+        //Informacion para los contadores y colocar la informacion
+        public JsonResult obtenerStasts()
+        {
+            var todas = baseDatos.Inventario.listaUnidades();
+            return Json(
+                new
+                {
+
+                    total = baseDatos.Inventario.TotalUnidades,
+                    activas = todas.Count(u => u.EstadoUnidad == "Disponible"),
+                    vencidas = todas.Count(u => u.EstadoUnidad == "Vencido"),
+                    hoy = todas.Count(u => u.FechaIngreso.Date == DateTime.Today)
+                }
+                
+                );
+        }
+
     }
 }

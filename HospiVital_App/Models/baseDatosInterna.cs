@@ -18,6 +18,7 @@ namespace HospiVital_App.Models
         // Espacio reservado para el futuro módulo de viales vencidos.
         // La lista queda creada, pero sin lógica ni carga de datos automática.
         public listaEnlazadaVialesVencidos VialesVencidos { get; } = new listaEnlazadaVialesVencidos();
+        public pilaSalidasVialesVencidos SalidasVialesVencidos { get; } = new pilaSalidasVialesVencidos();
 
         private readonly servicioCompatibilidad compatibilidad = new servicioCompatibilidad();
 
@@ -347,6 +348,67 @@ namespace HospiVital_App.Models
             VialesVencidos.insertarFinal(unidad);
             return true;
         }
+
+        public IEnumerable<unidadDeSangre> ObtenerVialesVencidosPendientesSalida()
+        {
+            nodoVialVencido? actual = VialesVencidos.Cabeza;
+
+            while (actual != null)
+            {
+                if (actual.Dato != null &&
+                    !SalidasVialesVencidos.existeRegistro(actual.Dato.IdUnidad))
+                {
+                    yield return actual.Dato;
+                }
+
+                actual = actual.Siguiente;
+            }
+        }
+
+        public bool RegistrarSalidaVialVencido(string idUnidad, string responsable)
+        {
+            unidadDeSangre? vial = BuscarVialVencido(idUnidad);
+
+            if (vial == null || SalidasVialesVencidos.existeRegistro(vial.IdUnidad))
+            {
+                return false;
+            }
+
+            string usuarioResponsable = string.IsNullOrWhiteSpace(responsable)
+                ? "Administrador"
+                : responsable.Trim();
+
+            registroSalidaVialVencido registro = new registroSalidaVialVencido(
+                vial,
+                DateTime.Now,
+                usuarioResponsable);
+
+            return SalidasVialesVencidos.apilar(registro);
+        }
+
+        private unidadDeSangre? BuscarVialVencido(string idUnidad)
+        {
+            if (string.IsNullOrWhiteSpace(idUnidad))
+            {
+                return null;
+            }
+
+            string id = idUnidad.Trim();
+            nodoVialVencido? actual = VialesVencidos.Cabeza;
+
+            while (actual != null)
+            {
+                if (actual.Dato != null &&
+                    actual.Dato.IdUnidad.Equals(id, StringComparison.OrdinalIgnoreCase))
+                {
+                    return actual.Dato;
+                }
+
+                actual = actual.Siguiente;
+            }
+
+            return null;
+        }
         private void CargarUsuariosIniciales()
         {
             Usuarios.insertarFinal(new AppUser
@@ -374,6 +436,25 @@ namespace HospiVital_App.Models
                 EsAdministradorPrincipal = true
             });
         }
+
+        //metodo relacionado con la depuracion de los viales de sangre
+        public int DepurarVialesVencidos()
+        {
+            //aplicar lo de depuracion
+            IEnumerable<unidadDeSangre> vencidos = Inventario.depurarVencidos();
+            int contador = 0;
+
+            foreach(unidadDeSangre vial in vencidos)
+            {
+                AgregarVialVencido(vial);
+                contador++;
+            }
+        
+            return contador;
+        
+        }
+
+
 
         private void CargarDatosIniciales()
         {
@@ -491,5 +572,9 @@ namespace HospiVital_App.Models
                 "HP20260003"
             );
         }
+  
+    
+    
+    
     }
 }
