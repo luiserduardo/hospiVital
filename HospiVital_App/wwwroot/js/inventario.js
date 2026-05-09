@@ -5,6 +5,10 @@
 
 //dom cargado
 $(document).ready(function () {
+
+
+
+    actualizarStats();
        function generarCodigo() {
             return $.ajax({
                 url: '/inventario/generarCodigo',
@@ -364,20 +368,65 @@ $(document).ready(function () {
     });
 
     function buscarYRenderizar(termino) {
+
+        if (!termino) {
+            estadoActual = Estado.Normal;
+            datosFiltrados = [];
+            paginaLocal = 1;
+            cargarPagina(1);
+            return;
+        }
+
+
+        //Para evitar que carge el filtro, evitar sobre poner resultados
+        if (estadoActual === Estado.filtrando) {
+            Swal.fire({
+                icon: "warning",
+                title: "Filtros activos",
+                text: 'Hay filtros aplicados. Limpia los filtros antes de buscar por texto.',
+            confirmButtonColor: '#e91e63'
+            });
+            $("#inventarioSearch").val(""); // devolver el input a vacío
+            return;
+        }
+
+
         $.ajax({
             url: '/inventario/buscarUnidades',
             type: 'GET',
             data: { termino: termino }
         })
             .done(function (data) {
-                renderizarTabla(data);
+                estadoActual = Estado.Buscando;
+                datosFiltrados = data;
+                mostrarPaginacionLocal();
             })
             .fail(function () {
                 Swal.fire("Error", "No se pudo realizar la búsqueda.", "error");
             });
     }
 
-    function renderizarTabla(unidades) {
+    function mostrarPaginacionLocal() {
+        const inicio = (paginaLocal - 1) * Elementos_Por_Pagina;
+        //retornar del array solo los elementos que se quieren
+        const porcion = datosFiltrados.slice(inicio, inicio + Elementos_Por_Pagina);
+        //division redoneada hacia arriba
+        const totalPaginasLocal = Math.ceil(datosFiltrados.length / Elementos_Por_Pagina);
+        $("#paginaIndicador").text(`${paginaLocal} / ${totalPaginasLocal}`);
+
+
+        const desde = datosFiltrados.length === 0 ? 0 : inicio + 1;
+        const hasta = Math.min(inicio + Elementos_Por_Pagina, datosFiltrados.length);
+
+        renderizarTabla(porcion, desde, hasta);
+        $("#btnPrevPage").prop("disabled", paginaLocal <= 1);
+        $("#btnNextPage").prop("disabled", paginacion >= totalPaginasLocal
+        );
+
+       
+    }
+
+    function renderizarTabla(unidades, desde, hasta) {
         const tbody = $("#inventarioTableBody");
         tbody.empty();
 
@@ -433,7 +482,7 @@ $(document).ready(function () {
         `);
         });
 
-        $("#inventarioCount").text(`Mostrando ${unidades.length} de ${unidades.length}`);
+        $("#inventarioCount").text(`.Mostrando ${desde} de ${hasta} . ${datosFiltrados.length} unidades`);
     }
 
 
@@ -447,12 +496,39 @@ $(document).ready(function () {
         $("#filterFecha").val("all");
         $("#filterEstado").val("all");
         sangreSeleccionada = "";
+
+
+
+        // ── volver a modo normal ──
+        estadoActual = Estado.Normal;
+        datosFiltrados = [];
+        paginaLocal = 1;
+
+        cargarPagina(1);   // recarga desde el servidor
         $("#bloodFilterGrid .blood-filter-chip").removeClass("active");
         $("#inventarioFilterPanel").removeClass("open");
         aplicarFiltros();
     });
 
     function aplicarFiltros() {
+
+
+        //Validar que previamente no se tiene el filtro de buscarYRenderizar
+        if (estadoActual === Estado.Buscando) {
+            Swal.fite({
+                icon: 'warning',
+                title: 'Busqueda activa',
+                text: 'Hay una busqueda de texto en curso. Borra el texto antes de aplicar filtros'
+                ,
+                confirmButtonColor: '#e91e63'
+            });
+            return;
+        }
+
+
+
+
+
         const fechaVal = $("#filterFecha").val();
         let fechaParam = "todos";
         if (fechaVal === "today") fechaParam = "hoy";
@@ -477,8 +553,13 @@ $(document).ready(function () {
             }
         })
             .done(function (data) {
-                renderizarTabla(data);
                 $("#inventarioFilterPanel").removeClass("open");
+
+                datosFiltrados = data;
+                estadoActual = Estado.filtrando;
+                paginaLocal = 1;
+                mostrarPaginacionLocal();
+
             })
             .fail(function () {
                 Swal.fire("Error", "No se pudieron aplicar los filtros.", "error");
@@ -600,4 +681,120 @@ $(document).ready(function () {
     $(document).on("input", "#telefonoInput", function () {
         $(this).val(formatearTelefono($(this).val()));
     });
+
+
+    //Variable para manejar la paginacion, la idea es que sean 3 estados depndiendo de lo que se esta aplicando
+    const Estado = {
+        Normal: "normal",
+        Buscando: "buscando",
+        filtrando:  "filtrando"
+    }
+
+    let estadoActual = Estado.Normal;
+    let datosFiltrados = [];
+
+    let paginaLocal = 1;
+    const Elementos_Por_Pagina = 5;
+
+
+    // ── PAGINACIÓN ───────────────────────────────────────────────────
+    const $paginacion = $(".pagination-custom");
+    let paginaActual = parseInt($paginacion.data("pagina-actual")) || 1;
+    let totalPaginas = parseInt($paginacion.data("total-paginas")) || 1;
+
+    function actualizarControlsPaginacion() {
+        $("#btnPrevPage").prop("disabled", paginaActual <= 1);
+        $("#btnNextPage").prop("disabled", paginaActual >= totalPaginas);
+        $("#paginaIndicador").text(`${paginaActual} / ${totalPaginas}`);     
+    }
+
+    function cargarPagina(pagina) {
+        $.ajax({
+            url: "/inventario/obtenerListado",
+            type: "GET",
+            data: { pagina: pagina },
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+            .done(function (data) {
+                paginaActual = data.paginas.actual;
+                totalPaginas = data.paginas.total;
+                renderizarTabla(data.filas);
+                actualizarControlsPaginacion();
+                $("#inventarioCount").text(
+                    `Página ${paginaActual} de ${totalPaginas} · ${data.paginas.totalUnidades} unidades`
+                );
+
+            })
+            .fail(function () {
+                Swal.fire("Error", "No se pudo cargar la página.", "error");
+            });
+    }
+
+    $("#btnPrevPage").on("click", function () {
+
+        if (estadoActual === Estado.Normal) {
+            cargarPagina(paginaActual - 1);
+        } else {
+            paginaLocal--;
+            mostrarPaginacionLocal();
+        }
+
+    });
+
+    $("#btnNextPage").on("click", function () {
+
+
+        if (estadoActual === Estado.Normal) {
+            cargarPagina(paginaActual + 1);
+        } else {
+            paginaLocal++;
+            mostrarPaginacionLocal();
+        }
+
+    })
+
+    actualizarControlsPaginacion();
+    // ── FIN PAGINACIÓN ───────────────────────────────────────────────
+
+    // ── INICIO DEPURACION ───────────────────────────────────────────────
+
+    document.getElementById('btnDepurar').addEventListener('click', function () {
+        Swal.fire({
+            icon: 'warning',
+            title: '¿Depurar inventario?',
+            text: 'Se eliminarán todos los viales vencidos del inventario activo y se moverán al registro de viales vencidos. Esta acción no se puede deshacer.',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, depurar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#e91e63',
+            cancelButtonColor: '#6c757d'
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                document.getElementById('formDepurar').submit();
+            }
+        });
+    });
+
+    // ── FIN DEPURACION ───────────────────────────────────────────────
+
+
+    // ──  Actualizar starts de la parte de inventario ───────────────────────────────────────────────
+    function actualizarStats() {
+        $.ajax({
+            url: '/inventario/obtenerStasts',
+            type: 'GET'
+        })
+            .done(function (data) {
+                $("#statTotal").text(data.total);
+                $("#statActivas").text(data.activas);
+                $("#statVencidas").text(data.vencidas);
+                $("#statHoy").text(data.hoy);
+            })
+            .fail(function () {
+                console.warn("No se pudieron cargar las estadísticas.");
+            });
+    }
+    // ─────────────────────────────────────────────────────────────────
+
+
 });
