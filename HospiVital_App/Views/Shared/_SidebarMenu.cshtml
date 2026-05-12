@@ -1,0 +1,69 @@
+﻿@using HospiVital.Models
+
+@{
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+
+    Func<string, string, string> isActive = (controller, action) =>
+        currentController.Equals(controller, StringComparison.OrdinalIgnoreCase) &&
+        currentAction.Equals(action, StringComparison.OrdinalIgnoreCase)
+            ? "active"
+            : "";
+}
+
+<nav class="sidebar-nav">
+    <a asp-controller="Home" asp-action="Inicio" class="sidebar-link @isActive("Home", "Inicio")">
+        <span class="sidebar-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+            </svg>
+        </span>
+        <span class="sidebar-label">Inicio</span>
+    </a>
+
+    @if (User.IsInRole(AppRoles.AsistenteMedico))
+    {
+        <a asp-controller="inventario" asp-action="obtenerListado" class="sidebar-link @isActive("inventario", "obtenerListado")">
+            <span class="sidebar-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6 4h12l1 3H5l1-3Zm0 5h12v10a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V9Zm3 3h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </span>
+            <span class="sidebar-label">Inventario</span>
+        </a>
+    }
+
+    @if (User.IsInRole(AppRoles.Medico))
+    {
+        <a asp-controller="receptores" asp-action="obtenerListado" class="sidebar-link @isActive("receptores", "obtenerListado")">
+            <span class="sidebar-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M7 8a3 3 0 1 1 0-6 3 3 0 0 1 0 6Zm10 14v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2m14-9 3-3m0 0-3-3m3 3H10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </span>
+            <span class="sidebar-label">Receptores</span>
+        </a>
+    }
+
+    @if (User.IsInRole(AppRoles.Admin))
+    {
+        <a asp-controller="usuarios" asp-action="RegistroUsuarios" class="sidebar-link @isActive("usuarios", "RegistroUsuarios")">
+            <span class="sidebar-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m17-10a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM19 8v6m-3-3h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </span>
+            <span class="sidebar-label">Registro Usuarios</span>
+        </a>
+
+
+        <a asp-controller="vialesVencidos" asp-action="obtenerListado" class="sidebar-link @isActive("vialesVencidos", "obtenerListado")">
+            <span class="sidebar-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M8 3h8m-6 0v5.2L6.4 16.1A3.5 3.5 0 0 0 9.6 21h4.8a3.5 3.5 0 0 0 3.2-4.9L14 8.2V3m-4.2 10h4.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </span>
+            <span class="sidebar-label">Viales Vencidos</span>
+        </a>
+    }
+</nav>

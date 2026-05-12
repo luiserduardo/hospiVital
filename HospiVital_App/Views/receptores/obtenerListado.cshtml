@@ -1,0 +1,437 @@
+@model HospiVital_App.Models.listaEnlazadaReceptorAsignacion
+@using HospiVital_App.Models
+
+@{
+    ViewData["Title"] = "Registro de Beneficiarios";
+
+    var compatibles = ViewBag.Compatibles as listaEnlazadaUnidadesCompatibles ?? new listaEnlazadaUnidadesCompatibles();
+    var totalPacientes = ViewBag.TotalPacientes ?? 0;
+    var completados = ViewBag.Completados ?? 0;
+    var tipoFiltrado = ViewBag.TipoFiltrado ?? "Seleccione tipo y Rh";
+    string filtroBusqueda = ViewBag.FiltroBusqueda as string ?? string.Empty;
+    string filtroEstado = ViewBag.FiltroEstado as string ?? "all";
+    string filtroTipoSangre = ViewBag.FiltroTipoSangre as string ?? "all";
+    string filtroFactorRh = ViewBag.FiltroFactorRh as string ?? "all";
+    string filtroFecha = ViewBag.FiltroFecha as string ?? "all";
+    string receptoresMensaje = TempData["ReceptoresMensaje"]?.ToString() ?? string.Empty;
+    string receptoresTipoMensaje = TempData["ReceptoresTipoMensaje"]?.ToString() ?? "info";
+
+    string? IsSelected(string actual, string opcion) =>
+        string.Equals(actual, opcion, StringComparison.OrdinalIgnoreCase) ? "selected" : null;
+
+    string filtroTipoCompleto = filtroTipoSangre.Equals("all", StringComparison.OrdinalIgnoreCase)
+        ? "all"
+        : filtroTipoSangre + filtroFactorRh;
+
+    string BloodFilterActive(string tipoCompleto) =>
+        string.Equals(filtroTipoCompleto, tipoCompleto, StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty;
+
+    string BloodBadgeClass(string? tipo) => tipo switch
+    {
+        "A+" or "A-" => "badge-blue",
+        "B+" or "B-" => "badge-primary",
+        "AB+" or "AB-" => "badge-pink",
+        "O+" => "badge-orange",
+        "O-" => "badge-red",
+        _ => "badge-warning"
+    };
+
+    string EstadoBadgeClass(string? estado) => estado switch
+    {
+        "Completado" => "badge-success",
+        "Pendiente" => "badge-warning",
+        _ => "badge-warning"
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/inventario.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/receptores.css" asp-append-version="true" />
+}
+
+<div class="stats-grid receptores-stats">
+    <div class="stat-card">
+        <div class="stat-info">
+            <small>Total Receptores</small>
+            <h3>@totalPacientes</h3>
+        </div>
+        <div class="stat-icon primary">🧑‍🤝‍🧑</div>
+    </div>
+
+    <div class="stat-card stat-card-success">
+        <div class="stat-info">
+            <small>Asignaciones Completadas</small>
+            <h3>@completados</h3>
+        </div>
+        <div class="stat-icon success">✅</div>
+    </div>
+</div>
+
+<div class="content-card receptores-shell">
+    <div class="content-card-body">
+        <div class="toolbar receptores-toolbar">
+            <div class="toolbar-left">
+                <div class="search-box">
+                    <span class="search-icon">🔎</span>
+                    <input id="receptoresSearch" name="busqueda" type="text" value="@filtroBusqueda" placeholder="ID, nombre, DUI, donante o unidad" />
+                </div>
+            </div>
+
+            <div class="toolbar-right">
+                <div class="inventario-filter-wrap">
+                    <button type="button" class="filter-btn" id="btnToggleFiltrosReceptores">
+                        ☰ Filtrar
+                    </button>
+
+                    <div id="receptoresFilterPanel" class="inventario-filter-panel">
+                        <div class="inventario-filter-title">FILTRAR POR</div>
+
+                        <div class="inventario-filter-group">
+                            <label for="filterFechaReceptor">Por Fecha</label>
+                            <select id="filterFechaReceptor" class="inventario-select">
+                                <option value="all" selected='@IsSelected(filtroFecha, "all")'>Todas</option>
+                                <option value="today" selected='@IsSelected(filtroFecha, "today")'>Hoy</option>
+                                <option value="last7" selected='@IsSelected(filtroFecha, "last7")'>Últimos 7 días</option>
+                                <option value="last30" selected='@IsSelected(filtroFecha, "last30")'>Últimos 30 días</option>
+                            </select>
+                        </div>
+
+                        <div class="inventario-filter-group">
+                            <label for="filterEstadoReceptor">Por Estado</label>
+                            <select id="filterEstadoReceptor" class="inventario-select">
+                                <option value="all" selected='@IsSelected(filtroEstado, "all")'>Todos</option>
+                                <option value="Completado" selected='@IsSelected(filtroEstado, "Completado")'>Completado</option>
+                                <option value="Pendiente" selected='@IsSelected(filtroEstado, "Pendiente")'>Pendiente</option>
+                            </select>
+                        </div>
+
+                        <div class="inventario-filter-group">
+                            <label>Por Tipo de Sangre</label>
+                            <input type="hidden" id="filterTipoSangreReceptor" value="@filtroTipoSangre" />
+                            <input type="hidden" id="filterFactorRhReceptor" value="@filtroFactorRh" />
+                            <div class="blood-filter-grid">
+                                <button type="button" class="blood-filter-chip @BloodFilterActive("A+")" data-blood-filter="A+">A+</button>
+                                <button type="button" class="blood-filter-chip @BloodFilterActive("A-")" data-blood-filter="A-">A-</button>
+                                <button type="button" class="blood-filter-chip @BloodFilterActive("B+")" data-blood-filter="B+">B+</button>
+                                <button type="button" class="blood-filter-chip @BloodFilterActive("B-")" data-blood-filter="B-">B-</button>
+                                <button type="button" class="blood-filter-chip @BloodFilterActive("AB+")" data-blood-filter="AB+">AB+</button>
+                                <button type="button" class="blood-filter-chip @BloodFilterActive("AB-")" data-blood-filter="AB-">AB-</button>
+                                <button type="button" class="blood-filter-chip @BloodFilterActive("O+")" data-blood-filter="O+">O+</button>
+                                <button type="button" class="blood-filter-chip @BloodFilterActive("O-")" data-blood-filter="O-">O-</button>
+                            </div>
+                        </div>
+
+                        <div class="inventario-filter-actions">
+                            <button type="button" class="btn-outline-custom filter-action-btn" id="btnLimpiarFiltrosReceptores">Limpiar</button>
+                            <button type="button" class="add-btn filter-action-btn" id="btnAplicarFiltrosReceptores">Aplicar Filtros</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="add-btn" id="btnAbrirReceptor">
+                    ⊕ AGREGAR RECEPTOR
+                </button>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table class="table-modern receptores-table">
+                <thead>
+                    <tr>
+                        <th>ID RECEPTOR</th>
+                        <th>BENEFICIARIO</th>
+                        <th>TIPO SANGRE</th>
+                        <th>DONANTE</th>
+                        <th>UNIDAD ASIGNADA</th>
+                        <th>FECHA TRANSFUSIÓN</th>
+                        <th>ESTADO</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="receptoresTableBody">
+                    @{
+                        var actualReceptor = Model.Cabeza;
+                    }
+
+                    @if (actualReceptor == null)
+                    {
+                        <tr>
+                            <td colspan="8" style="text-align:center; padding: 2rem; color: var(--text-muted); font-weight: 700;">
+                                No hay receptores registrados.
+                            </td>
+                        </tr>
+                    }
+
+                    @while (actualReceptor != null)
+                    {
+                        var item = actualReceptor.Dato;
+                        <tr data-receptor-dui="@item.DuiReceptor">
+                            <td class="receiver-id">@item.IdReceptor</td>
+                            <td>@item.Beneficiario</td>
+                            <td>
+                                <span class="badge-soft @BloodBadgeClass(item.TipoSangre)">
+                                    @item.TipoSangre
+                                </span>
+                            </td>
+                            <td>@item.Donante</td>
+                            <td class="unit-link">@item.UnidadAsignada</td>
+                            <td>@item.FechaTransfusion</td>
+                            <td>
+                                <span class="badge-soft @EstadoBadgeClass(item.Estado)">
+                                    @item.Estado
+                                </span>
+                            </td>
+                            <td class="actions-cell">
+                                <button type="button"
+                                        class="actions-menu"
+                                        data-action-toggle="@item.IdReceptor"
+                                        aria-label="Abrir acciones">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true" class="actions-menu-icon">
+                                        <circle cx="12" cy="5" r="1.8"></circle>
+                                        <circle cx="12" cy="12" r="1.8"></circle>
+                                        <circle cx="12" cy="19" r="1.8"></circle>
+                                    </svg>
+                                </button>
+                            </td>
+                        </tr>
+                        actualReceptor = actualReceptor.Siguiente;
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-footer">
+            <span id="receptoresCount">Cargando registros...</span>
+
+            <div class="pagination-custom">
+                <button type="button" class="page-btn" id="btnPrevPage">
+                    <i class="fas fa-chevron-left"></i> Anterior
+                </button>
+                <div id="pageNumbers" class="page-numbers-container"></div>
+        
+                <button type="button" class="page-btn" id="idNextPage">
+                    Siguiente <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="receptoresActionsFloatingMenu" class="actions-popover-floating">
+            <button type="button" id="btnViewReceptorDetails" class="actions-popover-item">
+                Ver detalles
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="receptorModalBackdrop" class="receptor-modal-backdrop">
+    <div class="receptor-modal">
+        <div class="receptor-modal-header">
+            <h3>REGISTRO DE RECEPTOR Y ASIGNACIÓN</h3>
+            <button type="button" class="receptor-modal-close" id="btnCerrarReceptor">×</button>
+        </div>
+
+        <form asp-action="Create" method="post" id="receptorForm" novalidate>
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="idUnidadSeleccionada" name="idUnidadSeleccionada" />
+
+            <div class="receptor-modal-body">
+                <section class="receptor-section">
+                    <h4>DATOS DEL RECEPTOR (PACIENTE)</h4>
+
+                    <div class="receptor-field-group receptor-field-full">
+                        <label>DOCUMENTO ÚNICO DE IDENTIDAD (DUI)</label>
+                        <input type="text"
+                               id="receptorDui"
+                               name="dui"
+                               placeholder="00000000-0"
+                               maxlength="10"
+                               minlength="10"
+                               inputmode="numeric"
+                               autocomplete="off"
+                               pattern="\d{8}-\d{1}"
+                               required />
+                    </div>
+
+                    <div class="receptor-grid receptor-grid-2">
+                        <div class="receptor-field-group">
+                            <label>NOMBRES</label>
+                            <input type="text" id="receptorNombre" name="nombre" placeholder="Ej. María Carmen" maxlength="60" autocomplete="off" required />
+                        </div>
+
+                        <div class="receptor-field-group">
+                            <label>APELLIDOS</label>
+                            <input type="text" id="receptorApellido" name="apellido" placeholder="Ej. Pérez Gómez" maxlength="60" autocomplete="off" required />
+                        </div>
+                    </div>
+
+                    <div class="receptor-grid receptor-grid-2">
+                        <div class="receptor-field-group">
+                            <label>TIPO DE SANGRE REQUERIDO</label>
+                            <select id="tipoSangreReceptor" name="tipoSangreRequerido" required>
+                                <option value="" selected disabled>Seleccione un tipo...</option>
+                                <option value="A">Tipo A</option>
+                                <option value="B">Tipo B</option>
+                                <option value="AB">Tipo AB</option>
+                                <option value="O">Tipo O</option>
+                            </select>
+                        </div>
+
+                        <div class="receptor-field-group">
+                            <label>FACTOR RH</label>
+                            <select id="factorRhReceptor" name="factorRhRequerido" required>
+                                <option value="" selected disabled>Seleccione Rh...</option>
+                                <option value="+">Rh +</option>
+                                <option value="-">Rh -</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="receptor-section">
+                    <div class="section-head-inline">
+                        <h4>VIAL VIGENTE COMPATIBLE (INVENTARIO)</h4>
+                        <span class="filter-chip" id="receptorFilterChip">
+                            FILTRADO POR: @tipoFiltrado
+                        </span>
+                    </div>
+
+                    <div class="compat-table-wrap">
+                        <table class="compat-table">
+                            <thead>
+                                <tr>
+                                    <th>ID VIAL</th>
+                                    <th>TIPO</th>
+                                    <th>DONANTE</th>
+                                    <th>UBICACIÓN</th>
+                                    <th>ACCIÓN</th>
+                                </tr>
+                            </thead>
+                            <tbody id="compatTableBody">
+                                @{
+                                    var actualCompatible = compatibles.Cabeza;
+                                }
+
+                                @if (actualCompatible == null)
+                                {
+                                    <tr>
+                                        <td colspan="5" style="text-align:center; padding:16px;">
+                                            Seleccione tipo de sangre y factor Rh para ver viales vigentes disponibles.
+                                        </td>
+                                    </tr>
+                                }
+
+                                @while (actualCompatible != null)
+                                {
+                                    var item = actualCompatible.Dato;
+                                    <tr data-tipo="@item.Tipo">
+                                        <td>@item.IdVial</td>
+                                        <td>
+                                            <span class="badge-soft @BloodBadgeClass(item.Tipo)">
+                                                @item.Tipo
+                                            </span>
+                                        </td>
+                                        <td>@item.Donante</td>
+                                        <td>@item.Ubicacion</td>
+                                        <td>
+                                            <button type="button"
+                                                    class="select-unit-btn"
+                                                    data-unit="@item.IdVial">
+                                                ✓ SELECCIONAR
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    actualCompatible = actualCompatible.Siguiente;
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <div class="receptor-modal-footer">
+                <button type="button" class="btn-outline-custom" id="btnCancelarReceptor">
+                    CANCELAR
+                </button>
+                <button type="submit" class="add-btn">
+                    ⊕ REGISTRAR CON VIAL SELECCIONADO
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="receptorDetallesBackdrop" class="receptor-modal-backdrop">
+    <div class="receptor-details-modal">
+        <div class="receptor-modal-header">
+            <h3>DETALLES DEL RECEPTOR</h3>
+            <button type="button" class="receptor-modal-close" id="btnCerrarDetallesReceptor">×</button>
+        </div>
+
+        <div class="receptor-details-body">
+            <div class="receptor-details-topgrid">
+                <div class="receptor-detail-card">
+                    <small>ID RECEPTOR</small>
+                    <strong id="detalleReceptorId">-</strong>
+                </div>
+
+                <div class="receptor-detail-card">
+                    <small>TIPO DE SANGRE</small>
+                    <strong id="detalleReceptorTipo">-</strong>
+                </div>
+
+                <div class="receptor-detail-card">
+                    <small>UNIDAD ASIGNADA</small>
+                    <strong id="detalleReceptorUnidad">-</strong>
+                </div>
+            </div>
+
+            <div class="receptor-details-grid">
+                <div class="receptor-detail-block">
+                    <small>BENEFICIARIO</small>
+                    <strong id="detalleReceptorNombre">-</strong>
+                </div>
+
+                <div class="receptor-detail-block">
+                    <small>DUI RECEPTOR</small>
+                    <strong id="detalleReceptorDui">-</strong>
+                </div>
+
+                <div class="receptor-detail-block">
+                    <small>FECHA TRANSFUSIÓN</small>
+                    <strong id="detalleReceptorFecha">-</strong>
+                </div>
+
+                <div class="receptor-detail-block">
+                    <small>ESTADO</small>
+                    <strong id="detalleReceptorEstado">-</strong>
+                </div>
+
+                <div class="receptor-detail-block">
+                    <small>DONANTE</small>
+                    <strong id="detalleReceptorDonante">-</strong>
+                </div>
+
+                <div class="receptor-detail-block">
+                    <small>DUI DONANTE</small>
+                    <strong id="detalleReceptorDonanteDui">-</strong>
+                </div>
+
+                <div class="receptor-detail-block">
+                    <small>TELÉFONO DONANTE</small>
+                    <strong id="detalleReceptorDonanteTelefono">-</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.receptorServerMessage = {
+            text: @Json.Serialize(receptoresMensaje),
+            icon: @Json.Serialize(receptoresTipoMensaje)
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/js/receptores.js" asp-append-version="true"></script>
+}

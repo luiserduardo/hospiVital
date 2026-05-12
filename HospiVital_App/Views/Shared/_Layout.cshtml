@@ -1,0 +1,122 @@
+﻿@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+
+    var pageTitle = (currentController, currentAction) switch
+    {
+        ("Home", "Inicio") => "Inicio",
+        ("inventario", "obtenerListado") => "Inventario",
+        ("receptores", "obtenerListado") => "Receptores",
+        ("usuarios", "RegistroUsuarios") => "Registro de Usuarios",
+        ("vialesVencidos", "obtenerListado") => "Viales Vencidos",
+        _ => ViewData["Title"]?.ToString() ?? "HospiVital"
+    };
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@pageTitle - HospiVital</title>
+
+    <script>
+        (function () {
+            try {
+                var isMobile = window.matchMedia("(max-width: 992px)").matches;
+
+                if (isMobile) {
+                    var mobileOpen = localStorage.getItem("hospivital-sidebar-open-mobile");
+                    if (mobileOpen === "true") {
+                        document.documentElement.classList.add("sidebar-open");
+                    }
+                } else {
+                    var desktopCollapsed = localStorage.getItem("hospivital-sidebar-collapsed");
+                    if (desktopCollapsed === "true") {
+                        document.documentElement.classList.add("sidebar-collapsed");
+                    }
+                }
+            } catch (e) { }
+        })();
+    </script>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/sidebar.css" asp-append-version="true" />
+
+    @RenderSection("Styles", required: false)
+</head>
+<body class="app-body">
+    <div class="app-shell">
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="sidebar-mobile-head">
+                <button type="button" class="sidebar-close" id="mobileSidebarClose" aria-label="Cerrar menú">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="sidebar-header-desktop">
+                <button type="button" class="sidebar-close desktop-close" id="desktopSidebarToggle" aria-label="Cerrar menú">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+                    </svg>
+                </button>
+
+                <div class="brand">
+                    <a asp-controller="Home" asp-action="Inicio" class="brand-link">
+                        <div class="brand-mark">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 2 4 5v6c0 5.25 3.44 9.73 8 11 4.56-1.27 8-5.75 8-11V5l-8-3Zm1 5v3h3v2h-3v3h-2v-3H8v-2h3V7h2Z" fill="currentColor" />
+                            </svg>
+                        </div>
+                        <div class="brand-text">
+                            <span class="brand-name">HOSPI-VITAL</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            @await Html.PartialAsync("_SidebarMenu")
+        </aside>
+
+        <div class="app-overlay" id="sidebarOverlay"></div>
+
+        <div class="app-main">
+            <header class="app-topbar">
+                <div class="topbar-left">
+                    <button type="button" class="sidebar-toggle" id="mobileSidebarToggle" aria-label="Abrir menú">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+                        </svg>
+                    </button>
+
+                    <h1 class="page-title">@pageTitle</h1>
+                </div>
+
+                <div class="topbar-actions">
+                    <form asp-controller="Home" asp-action="Logout" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn-outline-custom">Cerrar Sesión</button>
+                    </form>
+
+                    <div class="user-avatar">
+                        <img src="~/img/avatar.png" alt="Usuario" />
+                    </div>
+                </div>
+            </header>
+
+            <main class="page-content">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
