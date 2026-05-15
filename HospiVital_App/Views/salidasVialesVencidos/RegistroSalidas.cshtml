@@ -1,0 +1,209 @@
+@model HospiVital_App.Models.salidasVialesVencidosViewModel
+
+@{
+    ViewData["Title"] = "Salidas de Viales Vencidos";
+    var mensajeTipo = (TempData["SalidasVialesTipoMensaje"]?.ToString() ?? "info").ToLower();
+    var mensajeClase = mensajeTipo == "success" ? "salidas-message success" : "salidas-message error";
+}
+
+@section Styles {
+    <style>
+        .salidas-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .salidas-header h2 {
+            margin: 0;
+        }
+
+        .salidas-summary {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .salidas-stat {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px;
+            background: #f8fafc;
+        }
+
+        .salidas-stat small {
+            display: block;
+            color: #64748b;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .salidas-stat strong {
+            color: var(--text);
+            font-size: 1.4rem;
+        }
+
+        .salidas-message {
+            margin-bottom: 16px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-weight: 800;
+        }
+
+        .salidas-message.success {
+            background: #ecfdf5;
+            color: #047857;
+            border: 1px solid #bbf7d0;
+        }
+
+        .salidas-message.error {
+            background: #fff1f2;
+            color: #be123c;
+            border: 1px solid #fecdd3;
+        }
+
+        .salidas-section-title {
+            margin: 24px 0 12px;
+            font-size: 1rem;
+        }
+
+        .salidas-empty {
+            color: #64748b;
+            font-weight: 700;
+            padding: 18px;
+            text-align: center;
+        }
+
+        .salidas-action-cell {
+            width: 170px;
+        }
+
+        .salidas-stack-note {
+            color: #64748b;
+            font-size: .88rem;
+            font-weight: 700;
+            margin: -8px 0 12px;
+        }
+
+        @@media (max-width: 860px) {
+            .salidas-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .salidas-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+    </style>
+}
+
+<div class="content-card">
+    <div class="content-card-body">
+        <div class="salidas-header">
+            <h2>Registro de salidas de viales vencidos</h2>
+            <span class="badge-soft badge-primary">Administrador</span>
+        </div>
+
+        @if (TempData["SalidasVialesMensaje"] != null)
+        {
+            <div class="@mensajeClase">@TempData["SalidasVialesMensaje"]</div>
+        }
+
+        <div class="salidas-summary">
+            <div class="salidas-stat">
+                <small>Pendientes de salida</small>
+                <strong>@Model.TotalPendientes</strong>
+            </div>
+            <div class="salidas-stat">
+                <small>Salidas registradas</small>
+                <strong>@Model.TotalSalidas</strong>
+            </div>
+            <div class="salidas-stat">
+                <small>Ultima salida</small>
+                <strong>@(Model.UltimaSalida?.Vial.IdUnidad ?? "Sin registros")</strong>
+            </div>
+        </div>
+
+        <h3 class="salidas-section-title">Viales vencidos disponibles para registrar salida</h3>
+
+        <div class="table-wrap">
+            <table class="table-modern">
+                <thead>
+                    <tr>
+                        <th>ID UNIDAD</th>
+                        <th>TIPO DE SANGRE</th>
+                        <th>FECHA VENCIMIENTO</th>
+                        <th>DONANTE</th>
+                        <th>ACCION</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.VialesPendientes.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="salidas-empty">No hay viales vencidos pendientes de salida.</td>
+                        </tr>
+                    }
+
+                    @foreach (var vial in Model.VialesPendientes)
+                    {
+                        <tr>
+                            <td class="unit-code">@vial.IdUnidad</td>
+                            <td><span class="badge-soft badge-danger">@vial.TipoSangre@vial.FactorRh</span></td>
+                            <td>@vial.FechaCaducidad.ToString("dd/MM/yyyy")</td>
+                            <td>@(vial.Donante?.Nombre + " " + vial.Donante?.Apellido)</td>
+                            <td class="salidas-action-cell">
+                                <form asp-action="RegistrarSalida" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="idUnidad" value="@vial.IdUnidad" />
+                                    <button type="submit" class="add-btn">Registrar salida</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <h3 class="salidas-section-title">Pila de salidas registradas</h3>
+        <p class="salidas-stack-note">El primer registro mostrado corresponde al tope actual de la pila.</p>
+
+        <div class="table-wrap">
+            <table class="table-modern">
+                <thead>
+                    <tr>
+                        <th>ID UNIDAD</th>
+                        <th>TIPO DE SANGRE</th>
+                        <th>FECHA SALIDA</th>
+                        <th>RESPONSABLE</th>
+                        <th>DONANTE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.RegistrosSalida.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="salidas-empty">Aun no hay salidas registradas.</td>
+                        </tr>
+                    }
+
+                    @foreach (var registro in Model.RegistrosSalida)
+                    {
+                        <tr>
+                            <td class="unit-code">@registro.Vial.IdUnidad</td>
+                            <td><span class="badge-soft badge-danger">@registro.Vial.TipoSangre@registro.Vial.FactorRh</span></td>
+                            <td>@registro.FechaSalida.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@registro.Responsable</td>
+                            <td>@(registro.Vial.Donante?.Nombre + " " + registro.Vial.Donante?.Apellido)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
