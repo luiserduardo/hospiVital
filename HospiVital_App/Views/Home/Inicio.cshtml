@@ -2,15 +2,56 @@
     ViewData["Title"] = "Inicio";
 }
 
-<div class="hero-panel">
-    <div class="hero-card">
-        <div class="hero-image-wrap">
-            <img src="~/img/tecnico-medico.png" alt="Técnico médico" class="hero-image" />
-        </div>
+@if (User.IsInRole(AppRoles.AsistenteMedico))
+{
 
-        <h1 class="hero-title">Bienvenido Técnico Médico</h1>
-        <p class="hero-text">
-            Registro y gestión simplificados de donantes e inventario.
-        </p>
+    <div class="hero-panel">
+        <div class="hero-card">
+            <div class="hero-image-wrap">
+                <img src="~/img/tecnico.png" class="hero-image" />
+            </div>
+
+            <h1 class="hero-title">Bienvenido Técnico Médico</h1>
+            <p class="hero-text">
+                Registro y gestión simplificados de donantes e inventario.
+            </p>
+        </div>
     </div>
-</div>
+}
+else if (User.IsInRole(AppRoles.Medico))
+{
+
+      <div class="hero-panel">
+        <div class="hero-card">
+            <div class="hero-image-wrap">
+                <img src="~/img/medico.png" class="hero-image" />
+            </div>
+
+            <h1 class="hero-title">Bienvenido Médico</h1>
+            <p class="hero-text">
+            Gestión de receptores.</p>
+        </div>
+    </div>
+
+
+    <img src="~/img/medico.png" class="hero-image" />
+    <h1>Bienvenido Médico</h1>
+}
+else if (User.IsInRole(AppRoles.Admin))
+{
+
+    <div class="hero-panel">
+        <div class="hero-card">
+            <div class="hero-image-wrap">
+                <img src="~/img/admin.png" class="hero-image" />
+            </div>
+
+            <h1 class="hero-title">Bienvenido Administrador</h1>
+            <p class="hero-text">
+             total del sistema y usuarios.</p>
+
+        </div>
+    </div>
+
+   
+}

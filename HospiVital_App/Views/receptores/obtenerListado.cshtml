@@ -175,7 +175,15 @@
                             </td>
                             <td>@item.Donante</td>
                             <td class="unit-link">@item.UnidadAsignada</td>
-                            <td>@item.FechaTransfusion</td>
+                            <td>
+                                @{
+                                    DateTime fechaTemp;
+                                    string fechaMostrar = DateTime.TryParse(item.FechaTransfusion, out fechaTemp)
+                                    ? fechaTemp.ToString("dd/MM/yyyy")
+                                    : item.FechaTransfusion;
+                                }
+                                @fechaMostrar
+                            </td>
                             <td>
                                 <span class="badge-soft @EstadoBadgeClass(item.Estado)">
                                     @item.Estado
@@ -201,11 +209,17 @@
         </div>
 
         <div class="table-footer">
-            <span id="receptoresCount">Mostrando @Model.Total de @totalPacientes</span>
+            <span id="receptoresCount">Cargando registros...</span>
 
             <div class="pagination-custom">
-                <button type="button" class="page-btn" disabled>Anterior</button>
-                <button type="button" class="page-btn">Siguiente</button>
+                <button type="button" class="page-btn" id="btnPrevPage">
+                    <i class="fas fa-chevron-left"></i> Anterior
+                </button>
+                <div id="pageNumbers" class="page-numbers-container"></div>
+
+                <button type="button" class="page-btn" id="idNextPage">
+                    Siguiente <i class="fas fa-chevron-right"></i>
+                </button>
             </div>
         </div>
 
