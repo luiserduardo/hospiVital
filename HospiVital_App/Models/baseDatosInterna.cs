@@ -14,8 +14,8 @@ namespace HospiVital_App.Models
         public listaEnlazadaDonantes RegistroDonantes { get; } = new listaEnlazadaDonantes();
         public listaEnlazadaReceptorAsignacion AsignacionesRealizadas { get; } = new listaEnlazadaReceptorAsignacion();
         public listaEnlazadaUsuarios Usuarios { get; } = new listaEnlazadaUsuarios();
-        public listaEnlazadaVialesVencidos VialesVencidos { get; } = new listaEnlazadaVialesVencidos();
 
+        public listaEnlazadaVialesVencidos VialesVencidos { get; } = new listaEnlazadaVialesVencidos();
         // Pila LIFO: registra en orden cronológico inverso las salidas de viales vencidos.
         // Solo se apila cuando un responsable confirma la baja del vial del sistema.
         public pilaSalidasVialesVencidos SalidasVialesVencidos { get; } = new pilaSalidasVialesVencidos();

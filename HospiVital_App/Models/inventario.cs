@@ -22,6 +22,8 @@ namespace HospiVital_App.Models
 
         public nodoUnidadSangre obtenerFrente()
         {
+            cola.reordenar();
+
             return cola.obtenerFrente();
         }
 
@@ -104,6 +106,10 @@ namespace HospiVital_App.Models
 
         public IEnumerable<unidadDeSangre> obtenerPagina(int pagina, int elementosPorPagina)
         {
+
+            cola.reordenar();
+
+
             int inicio = (pagina - 1) * elementosPorPagina;
             int fin = inicio + elementosPorPagina;
 
@@ -133,6 +139,9 @@ namespace HospiVital_App.Models
         // como una base de datos interna compartida entre roles.
         public IEnumerable<unidadDeSangre> listaUnidades()
         {
+
+            cola.reordenar();
+
             var actual = cola.obtenerFrente();
 
             while (actual != null)

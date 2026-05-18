@@ -9,7 +9,7 @@
 
 
         //Para establecer la prioridad, por fehca vencimineto
-        public int Prioridad { get => prioridad; set => prioridad = value; }
+        public int Prioridad => dato.cantidadDiasParaVencer();
 
         //Metodos publico para acceder
         public unidadDeSangre Dato { get => dato; set => dato = value; }
@@ -21,7 +21,6 @@
         {
             this.dato = nuevaUnidad;
             this.sig = null;
-            this.prioridad = nuevaUnidad.cantidadDiasParaVencer();
 
 
         }

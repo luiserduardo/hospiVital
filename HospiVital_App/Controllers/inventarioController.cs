@@ -238,11 +238,16 @@ namespace HospiVital_App.Controllers
             int cantidad = baseDatos.DepurarVialesVencidos();
 
             //TempData sirve para guardar el dato, se va a utilizar en otra parte
-            TempData["InventarioTipoMensaje"] = cantidad > 0 ? cantidad : 0;
+            TempData["InventarioTipoMensaje"] = cantidad > 0 ? "success" : "error";
             TempData["InventarioMensaje"] = cantidad > 0
                     ? $"Se depuraron {cantidad} vial(es) vencido(s) del inventario correctamente."
                     : "No se encontraron viales vencidos para depurar.";
 
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { cantidad, mensaje = TempData["InventarioMensaje"] });
+            }
 
             return RedirectToAction("obtenerListado");
         }

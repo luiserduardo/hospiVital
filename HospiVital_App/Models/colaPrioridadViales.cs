@@ -5,6 +5,7 @@
     {
         private nodoUnidadSangre frente;
 
+
         // Ver si está vacía
         public bool estaVacia()
         {
@@ -69,6 +70,26 @@
             return frente;
         }
 
-//metodo para ver la info, tomar en cuenta por si mas adelante es necesario
+        public void reordenar()
+        {
+            List<unidadDeSangre> unidades = new List<unidadDeSangre>();
+            nodoUnidadSangre actual = frente;
+
+            while (actual != null)
+            {
+                unidades.Add(actual.Dato);
+                actual = actual.Sig;
+            }
+
+            // Limpiar cola
+            frente = null;
+
+            foreach (unidadDeSangre unidad in unidades)
+            {
+                encolar(unidad);
+            }
+        }
+
+
     }
 }

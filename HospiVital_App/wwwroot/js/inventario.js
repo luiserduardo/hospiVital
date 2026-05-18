@@ -757,7 +757,6 @@ $(document).ready(function () {
     // ── FIN PAGINACIÓN ───────────────────────────────────────────────
 
     // ── INICIO DEPURACION ───────────────────────────────────────────────
-
     document.getElementById('btnDepurar').addEventListener('click', function () {
         Swal.fire({
             icon: 'warning',
@@ -770,15 +769,41 @@ $(document).ready(function () {
             cancelButtonColor: '#6c757d'
         }).then(function (result) {
             if (result.isConfirmed) {
-                document.getElementById('formDepurar').submit();
+
+                const token = $('input[name="__RequestVerificationToken"]').val();
+
+                $.ajax({
+                    url: '/inventario/depurarVencidos',
+                    type: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'RequestVerificationToken': token
+                    },
+                    data: { __RequestVerificationToken: token }
+                })
+                    .done(function (res) {
+                        // Refrescar tabla y contadores sin recargar la página
+                        estadoActual = Estado.Normal;
+                        datosFiltrados = [];
+                        paginaLocal = 1;
+                        cargarPagina(1);       // ← tabla actualizada desde servidor
+                        actualizarStats();     // ← contadores actualizados
+
+                        Swal.fire({
+                            icon: res.cantidad > 0 ? 'success' : 'info',
+                            title: 'Inventario',
+                            text: res.mensaje,
+                            confirmButtonColor: '#e91e63'
+                        });
+                    })
+                    .fail(function () {
+                        Swal.fire('Error', 'No se pudo completar la depuración.', 'error');
+                    });
             }
         });
     });
-
     // ── FIN DEPURACION ───────────────────────────────────────────────
 
-
-    // ──  Actualizar starts de la parte de inventario ───────────────────────────────────────────────
     function actualizarStats() {
         $.ajax({
             url: '/inventario/obtenerStasts',
@@ -794,7 +819,53 @@ $(document).ready(function () {
                 console.warn("No se pudieron cargar las estadísticas.");
             });
     }
-    // ─────────────────────────────────────────────────────────────────
+
+    function renderizarSalidas(data) {
+        const tbody = document.getElementById("salidasTableBody");
+
+        if (data.registros.length === 0) {
+            tbody.innerHTML = `<tr>
+            <td colspan="5" class="salidas-empty">
+                No hay salidas registradas.
+            </td>
+        </tr>`;
+            return;
+        }
+
+        tbody.innerHTML = data.registros.map(r => `
+        <tr>
+            <td class="unit-code">${r.idUnidad}</td>
+            <td>
+                <span class="badge-soft badge-danger">
+                    ${r.tipoSangre}${r.factorRh}
+                </span>
+            </td>
+            <td>${r.fecha}</td>
+            <td>${r.responsable}</td>
+            <td>${r.donante}</td>
+        </tr>
+    `).join('');
+    }
+
+
+    function cargarSalidasPagina(pagina) {
+        fetch(`/salidasVialesVencidos/ObtenerSalidasPagina?pagina=${pagina}`)
+            .then(res => res.json())
+            .then(data => {
+                renderizarSalidas(data);
+            });
+    }
+
+    $(document).on("click", "#btnSalidasAnterior", function () {
+        const pagina = $(this).data("pagina");
+        cargarSalidasPagina(pagina);
+    });
+
+    $(document).on("click", "#btnSalidasSiguiente", function () {
+        const pagina = $(this).data("pagina");
+        cargarSalidasPagina(pagina);
+    });
+
 
 
 });

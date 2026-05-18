@@ -515,6 +515,40 @@
     padding-top: 6px;
 }
 
+
+.salidas-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.pag-btn {
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background .15s;
+}
+
+    .pag-btn:disabled {
+        opacity: .4;
+        cursor: default;
+    }
+
+    .pag-btn:not(:disabled):hover {
+        background: #f1f5f9;
+    }
+
+.pag-info {
+    font-size: .88rem;
+    font-weight: 700;
+    color: #64748b;
+}
+
 @media (max-width: 768px) {
     .inventario-details-topgrid,
     .inventario-details-grid {

@@ -1,11 +1,16 @@
-@model HospiVital_App.Models.salidasVialesVencidosViewModel
+﻿@model HospiVital_App.Models.salidasVialesVencidosViewModel
 
 @{
     ViewData["Title"] = "Salidas de Viales Vencidos";
     var mensajeTipo = (TempData["SalidasVialesTipoMensaje"]?.ToString() ?? "info").ToLower();
     var mensajeClase = mensajeTipo == "success" ? "salidas-message success" : "salidas-message error";
-}
 
+    int pendientesAnterior = Math.Max(1, Model.PaginaPendientesActual - 1);
+    int pendientesSiguiente = Math.Min(Model.TotalPaginasPendientes, Model.PaginaPendientesActual + 1);
+    int salidasAnterior = Math.Max(1, Model.PaginaSalidasActual - 1);
+    int salidasSiguiente = Math.Min(Model.TotalPaginasSalidas, Model.PaginaSalidasActual + 1);
+}
+zz
 @section Styles {
     <style>
         .salidas-header {
@@ -16,9 +21,9 @@
             margin-bottom: 18px;
         }
 
-        .salidas-header h2 {
-            margin: 0;
-        }
+            .salidas-header h2 {
+                margin: 0;
+            }
 
         .salidas-summary {
             display: grid;
@@ -34,18 +39,18 @@
             background: #f8fafc;
         }
 
-        .salidas-stat small {
-            display: block;
-            color: #64748b;
-            font-weight: 800;
-            text-transform: uppercase;
-            margin-bottom: 6px;
-        }
+            .salidas-stat small {
+                display: block;
+                color: #64748b;
+                font-weight: 800;
+                text-transform: uppercase;
+                margin-bottom: 6px;
+            }
 
-        .salidas-stat strong {
-            color: var(--text);
-            font-size: 1.4rem;
-        }
+            .salidas-stat strong {
+                color: var(--text);
+                font-size: 1.4rem;
+            }
 
         .salidas-message {
             margin-bottom: 16px;
@@ -54,17 +59,17 @@
             font-weight: 800;
         }
 
-        .salidas-message.success {
-            background: #ecfdf5;
-            color: #047857;
-            border: 1px solid #bbf7d0;
-        }
+            .salidas-message.success {
+                background: #ecfdf5;
+                color: #047857;
+                border: 1px solid #bbf7d0;
+            }
 
-        .salidas-message.error {
-            background: #fff1f2;
-            color: #be123c;
-            border: 1px solid #fecdd3;
-        }
+            .salidas-message.error {
+                background: #fff1f2;
+                color: #be123c;
+                border: 1px solid #fecdd3;
+            }
 
         .salidas-section-title {
             margin: 24px 0 12px;
@@ -89,12 +94,29 @@
             margin: -8px 0 12px;
         }
 
+        .pagination-custom .page-btn {
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .pagination-custom .page-btn.disabled {
+                opacity: .55;
+                pointer-events: none;
+            }
+
         @@media (max-width: 860px) {
             .salidas-summary {
                 grid-template-columns: 1fr;
             }
 
             .salidas-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .table-footer {
                 align-items: flex-start;
                 flex-direction: column;
             }
@@ -106,7 +128,7 @@
     <div class="content-card-body">
         <div class="salidas-header">
             <h2>Registro de salidas de viales vencidos</h2>
-            <span class="badge-soft badge-primary">Administrador</span>
+            <span class="badge-soft badge-primary">Admin</span>
         </div>
 
         @if (TempData["SalidasVialesMensaje"] != null)
@@ -124,7 +146,7 @@
                 <strong>@Model.TotalSalidas</strong>
             </div>
             <div class="salidas-stat">
-                <small>Ultima salida</small>
+                <small>Última salida</small>
                 <strong>@(Model.UltimaSalida?.Vial.IdUnidad ?? "Sin registros")</strong>
             </div>
         </div>
@@ -139,7 +161,7 @@
                         <th>TIPO DE SANGRE</th>
                         <th>FECHA VENCIMIENTO</th>
                         <th>DONANTE</th>
-                        <th>ACCION</th>
+                        <th>ACCIÓN</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -161,6 +183,8 @@
                                 <form asp-action="RegistrarSalida" method="post">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="idUnidad" value="@vial.IdUnidad" />
+                                    <input type="hidden" name="paginaPendientes" value="@Model.PaginaPendientesActual" />
+                                    <input type="hidden" name="paginaSalidas" value="@Model.PaginaSalidasActual" />
                                     <button type="submit" class="add-btn">Registrar salida</button>
                                 </form>
                             </td>
@@ -168,6 +192,29 @@
                     }
                 </tbody>
             </table>
+        </div>
+
+        <div class="table-footer">
+            <span>
+                Página @Model.PaginaPendientesActual de @Model.TotalPaginasPendientes
+                · @Model.TotalPendientes viales pendientes
+            </span>
+
+            <div class="pagination-custom">
+                <a asp-action="RegistroSalidas"
+                   asp-route-paginaPendientes="@pendientesAnterior"
+                   asp-route-paginaSalidas="@Model.PaginaSalidasActual"
+                   class="page-btn @(Model.PaginaPendientesActual <= 1 ? "disabled" : "")">
+                    Anterior
+                </a>
+
+                <a asp-action="RegistroSalidas"
+                   asp-route-paginaPendientes="@pendientesSiguiente"
+                   asp-route-paginaSalidas="@Model.PaginaSalidasActual"
+                   class="page-btn @(Model.PaginaPendientesActual >= Model.TotalPaginasPendientes ? "disabled" : "")">
+                    Siguiente
+                </a>
+            </div>
         </div>
 
         <h3 class="salidas-section-title">Pila de salidas registradas</h3>
@@ -188,7 +235,7 @@
                     @if (!Model.RegistrosSalida.Any())
                     {
                         <tr>
-                            <td colspan="5" class="salidas-empty">Aun no hay salidas registradas.</td>
+                            <td colspan="5" class="salidas-empty">Aún no hay salidas registradas.</td>
                         </tr>
                     }
 
@@ -204,6 +251,29 @@
                     }
                 </tbody>
             </table>
+        </div>
+
+        <div class="table-footer">
+            <span>
+                Página @Model.PaginaSalidasActual de @Model.TotalPaginasSalidas
+                · @Model.TotalSalidas salidas registradas
+            </span>
+
+            <div class="pagination-custom">
+                <a asp-action="RegistroSalidas"
+                   asp-route-paginaPendientes="@Model.PaginaPendientesActual"
+                   asp-route-paginaSalidas="@salidasAnterior"
+                   class="page-btn @(Model.PaginaSalidasActual <= 1 ? "disabled" : "")">
+                    Anterior
+                </a>
+
+                <a asp-action="RegistroSalidas"
+                   asp-route-paginaPendientes="@Model.PaginaPendientesActual"
+                   asp-route-paginaSalidas="@salidasSiguiente"
+                   class="page-btn @(Model.PaginaSalidasActual >= Model.TotalPaginasSalidas ? "disabled" : "")">
+                    Siguiente
+                </a>
+            </div>
         </div>
     </div>
 </div>
